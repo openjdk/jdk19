@@ -219,14 +219,6 @@ frame frame::sender_for_interpreter_frame(RegisterMap *map) const {
   return frame(sender_sp(), sender_pc(), (intptr_t*)get_ijava_state()->sender_sp);
 }
 
-intptr_t* frame::compiled_sender_sp(CodeBlob* cb) const {
-  return sender_sp();
-}
-
-address* frame::compiled_sender_pc_addr(CodeBlob* cb) const {
-  return sender_pc_addr();
-}
-
 void frame::patch_pc(Thread* thread, address pc) {
   assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
   address* pc_addr = (address*)&(own_abi()->lr);
