@@ -312,6 +312,9 @@ inline frame frame::sender_raw(RegisterMap* map) const {
 inline frame frame::sender_for_compiled_frame(RegisterMap *map) const {
   assert(map != nullptr, "map must be set");
 
+  intptr_t* sender_sp = this->sender_sp();
+  address   sender_pc = this->sender_pc();
+
   // Now adjust the map.
   if (map->update_map()) {
     // Tell GC to use argument oopmaps for some runtime stubs that need it.
@@ -321,7 +324,7 @@ inline frame frame::sender_for_compiled_frame(RegisterMap *map) const {
     }
   }
 
-  return frame(sender_sp(), sender_pc());
+  return frame(sender_sp, sender_pc);
 }
 
 template <typename RegisterMapT>
