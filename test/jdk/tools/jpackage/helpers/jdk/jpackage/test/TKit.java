@@ -233,6 +233,43 @@ final public class TKit {
         trace("Done");
     }
 
+    public static void createJPackageXMLFile(Path appImageDir,
+            String mainLauncher, String mainClass) throws IOException {
+        String version = System.getProperty("java.version");
+        String platform = "";
+        Path appDir = appImageDir;
+        if (TKit.isWindows()) {
+            platform = "windows";
+            appDir = Files.createDirectories(
+                         appImageDir.resolve("app"));
+        } else if (TKit.isLinux()) {
+            platform = "linux";
+            appDir = Files.createDirectories(
+                         appImageDir.resolve("lib").resolve("app"));
+        } else if (TKit.isOSX()) {
+            platform = "macOS";
+            appDir = Files.createDirectories(
+                         appImageDir.resolve("Contents").resolve("app"));
+        }
+
+        TKit.createTextFile(appDir.resolve(".jpackage.xml"), List.of(
+                            "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                            String.format(
+                                "<jpackage-state platform=\"%s\" version=\"%s\">",
+                                platform, version),
+                            "<app-version>1.0</app-version>",
+                            String.format(
+                                "<main-launcher>%s</main-launcher>",
+                                mainLauncher),
+                            String.format(
+                                "<main-class>%s</main-class>",
+                                mainClass),
+                            "<signed>false</signed>",
+                            "<app-store>false</app-store>",
+                            "</jpackage-state>"
+            ));
+    }
+
     public static void createPropertiesFile(Path propsFilename,
             Collection<Map.Entry<String, String>> props) {
         trace(String.format("Create [%s] properties file...",

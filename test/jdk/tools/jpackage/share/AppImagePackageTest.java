@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,8 @@ public class AppImagePackageTest {
         final String name = "EmptyAppImagePackageTest";
         final String imageName = name + (TKit.isOSX() ? ".app" : "");
         Path appImageDir = TKit.createTempDirectory(null).resolve(imageName);
+        TKit.createJPackageXMLFile(appImageDir,
+                "EmptyAppImagePackageTest", "Hello");
 
         Files.createDirectories(appImageDir.resolve("bin"));
         Path libDir = Files.createDirectories(appImageDir.resolve("lib"));
@@ -101,4 +103,5 @@ public class AppImagePackageTest {
         return TKit.TEST_SRC_ROOT.resolve(Path.of("resources", name
                 + TKit.ICON_SUFFIX));
     }
+
 }
