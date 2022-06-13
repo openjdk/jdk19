@@ -1312,10 +1312,12 @@ void LIRGenerator::do_getModifiers(Intrinsic* x) {
   LIR_Opr recv_klass = new_register(T_METADATA);
   __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), recv_klass, info);
 
-  // Check if this is a Java mirror of primitive type.
+  // Check if this is a Java mirror of primitive type, and select the appropriate klass.
   LIR_Opr klass = new_register(T_METADATA);
   __ cmp(lir_cond_equal, recv_klass, LIR_OprFact::metadataConst(0));
   __ cmove(lir_cond_equal, prim_klass, recv_klass, klass, T_ADDRESS);
+
+  // Get the answer.
   __ move(new LIR_Address(klass, in_bytes(Klass::modifier_flags_offset()), T_INT), result);
 }
 
