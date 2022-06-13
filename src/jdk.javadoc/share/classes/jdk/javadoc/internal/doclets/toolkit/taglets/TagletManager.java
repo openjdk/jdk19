@@ -350,16 +350,13 @@ public class TagletManager {
     }
 
     /**
-     * Given a series of {@code DocTree}s, check for spelling mistakes.
+     * Given a series of {@code DocTree}s, check for misuse and spelling mistakes.
      *
      * @param element the tags holder
      * @param trees the trees containing the comments
      * @param inlineTrees true if the trees are inline and false otherwise
      */
     public void checkTags(Element element, Iterable<? extends DocTree> trees, boolean inlineTrees) {
-        if (trees == null) {
-            return;
-        }
         CommentHelper ch = utils.getCommentHelper(element);
         for (DocTree tag : trees) {
             String name = tag.getKind().tagName;
