@@ -1298,19 +1298,19 @@ void LIRGenerator::do_getModifiers(Intrinsic* x) {
     info = state_for(x);
   }
 
-  // Load the answer for primitive type right away.
-  // While this is less efficient than doing another branch, it poses
-  // much less risk of confusion for C1 register allocator.
-  __ move(LIR_OprFact::intConst(JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC), result);
+  // While reading off the universal constant mirror is less efficient than doing
+  // another branch and returning the exact constants, this runs into much less
+  // risk of confusion for C1 register allocator.
+
+  LIR_Opr recv_klass = new_register(T_METADATA);
+  LIR_Opr prim_klass = LIR_OprFact::metadataConst(Universe::byteArrayKlassObj());
 
   // Check if this is a Java mirror of primitive type.
-  LabelObj* L_done = new LabelObj();
   LIR_Opr klass = new_register(T_METADATA);
-  __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), klass, info);
-  __ cmp(lir_cond_equal, klass, LIR_OprFact::metadataConst(0));
-  __ branch(lir_cond_equal, L_done->label());
+  __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), recv_klass, info);
+  __ cmp(lir_cond_equal, recv_klass, LIR_OprFact::metadataConst(0));
+  __ cmove(lir_cond_equal, prim_klass, recv_klass, klass, T_ADDRESS);
   __ move(new LIR_Address(klass, in_bytes(Klass::modifier_flags_offset()), T_INT), result);
-  __ branch_destination(L_done->label());
 }
 
 void LIRGenerator::do_getObjectSize(Intrinsic* x) {

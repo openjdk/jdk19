@@ -93,6 +93,7 @@ class Universe: AllStatic {
 
  private:
   // Known classes in the VM
+  static Klass* _intKlassObj;
   static Klass* _typeArrayKlassObjs[T_LONG+1];
   static Klass* _objectArrayKlassObj;
   // Special int-Array that represents filler objects that are used by GC to overwrite
