@@ -1298,11 +1298,14 @@ void LIRGenerator::do_getModifiers(Intrinsic* x) {
     info = state_for(x);
   }
 
-  LIR_Opr klass = new_register(T_METADATA);
+  // Load the answer for primitive type right away.
+  // While this is less efficient than doing another branch, it poses
+  // much less risk of confusion for C1 register allocator.
+  __ move(LIR_OprFact::intConst(JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC), result);
 
   // Check if this is a Java mirror of primitive type.
   LabelObj* L_done = new LabelObj();
-  __ move(LIR_OprFact::intConst(JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC), result);
+  LIR_Opr klass = new_register(T_METADATA);
   __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), klass, info);
   __ cmp(lir_cond_equal, klass, LIR_OprFact::metadataConst(0));
   __ branch(lir_cond_equal, L_done->label());
