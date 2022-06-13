@@ -387,11 +387,6 @@ public class TagletManager {
                     printTagMisuseWarn(ch, taglet, tag, "inline");
                 }
 
-                // nothing more to do
-                if (element == null) {
-                    return;
-                }
-
                 if (!inlineTrees) {
                     new SimpleElementVisitor14<Void, Void>() {
                         @Override
