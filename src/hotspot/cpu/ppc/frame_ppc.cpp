@@ -394,17 +394,7 @@ intptr_t *frame::initial_deoptimization_info() {
 
 #ifndef PRODUCT
 // This is a generic constructor which is only used by pns() in debug.cpp.
-frame::frame(void* sp, void* fp, void* pc) : _sp((intptr_t*)sp),
-                                             _pc((address)pc),
-                                             _cb(NULL),
-                                             _oop_map(NULL),
-                                             _on_heap(false),
-                                             DEBUG_ONLY(_frame_index(-1) COMMA)
-                                             _unextended_sp((intptr_t*)sp),
-                                             _fp(NULL) {
-  setup(); // also sets _fp and adjusts _unextended_sp
-}
-
+frame::frame(void* sp, void* fp, void* pc) : frame((intptr_t*)sp, (address)pc) {}
 #endif
 
 // Pointer beyond the "oldest/deepest" BasicObjectLock on stack.
