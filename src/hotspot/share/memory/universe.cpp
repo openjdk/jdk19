@@ -82,7 +82,6 @@
 #include "utilities/preserveException.hpp"
 
 // Known objects
-Klass* Universe::_intKlassObj                         = NULL;
 Klass* Universe::_typeArrayKlassObjs[T_LONG+1]        = { NULL /*, NULL...*/ };
 Klass* Universe::_objectArrayKlassObj                 = NULL;
 Klass* Universe::_fillerArrayKlassObj                 = NULL;

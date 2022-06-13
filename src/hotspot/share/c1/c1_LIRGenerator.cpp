@@ -1299,15 +1299,21 @@ void LIRGenerator::do_getModifiers(Intrinsic* x) {
   }
 
   // While reading off the universal constant mirror is less efficient than doing
-  // another branch and returning the exact constants, this runs into much less
-  // risk of confusion for C1 register allocator.
+  // another branch and returning the constant answer, this branchless code runs into
+  // much less risk of confusion for C1 register allocator. The choice of the universe
+  // object here is correct as long as it returns the same modifiers we would expect
+  // from the primitive class itself. See spec for Class.getModifiers that provides
+  // the typed array klasses with similar modifiers as their component types.
+
+  Klass* univ_klass_obj = Universe::byteArrayKlassObj();
+  assert(univ_klass_obj->modifier_flags() == (JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC), "Sanity");
+  LIR_Opr prim_klass = LIR_OprFact::metadataConst(univ_klass_obj);
 
   LIR_Opr recv_klass = new_register(T_METADATA);
-  LIR_Opr prim_klass = LIR_OprFact::metadataConst(Universe::byteArrayKlassObj());
+  __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), recv_klass, info);
 
   // Check if this is a Java mirror of primitive type.
   LIR_Opr klass = new_register(T_METADATA);
-  __ move(new LIR_Address(receiver.result(), java_lang_Class::klass_offset(), T_ADDRESS), recv_klass, info);
   __ cmp(lir_cond_equal, recv_klass, LIR_OprFact::metadataConst(0));
   __ cmove(lir_cond_equal, prim_klass, recv_klass, klass, T_ADDRESS);
   __ move(new LIR_Address(klass, in_bytes(Klass::modifier_flags_offset()), T_INT), result);
