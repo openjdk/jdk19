@@ -66,7 +66,7 @@ public class VThreadNotifyFramePopTest {
 
 
     /**
-     * Creates a HTTP server bound to the loopback address. The server responses to
+     * Creates a HTTP server bound to the loopback address. The server responds to
      * the request "/hello" with a message.
      */
     static HttpServer createHttpServer() throws IOException {
@@ -108,6 +108,7 @@ public class VThreadNotifyFramePopTest {
                 System.out.println("open " + url);
                 try (InputStream in = url.openStream()) {
                     brkpoint();
+                    System.out.println("reading response");
                     in.readAllBytes();
                 }
             } finally {
