@@ -2857,6 +2857,44 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  RuntimeStub* generate_cont_doYield() {
+    if (!Continuations::enabled()) return nullptr;
+    Unimplemented();
+    return nullptr;
+  }
+
+  address generate_cont_thaw(bool return_barrier, bool exception) {
+    if (!Continuations::enabled()) return nullptr;
+    Unimplemented();
+    return nullptr;
+  }
+
+  address generate_cont_thaw() {
+    if (!Continuations::enabled()) return nullptr;
+    Unimplemented();
+    return nullptr;
+  }
+
+  address generate_cont_returnBarrier() {
+    if (!Continuations::enabled()) return nullptr;
+    Unimplemented();
+    return nullptr;
+  }
+
+  address generate_cont_returnBarrier_exception() {
+    if (!Continuations::enabled()) return nullptr;
+    Unimplemented();
+    return nullptr;
+  }
+
+  #if INCLUDE_JFR
+  RuntimeStub* generate_jfr_write_checkpoint() {
+    if (!Continuations::enabled()) return nullptr;
+    Unimplemented();
+    return nullptr;
+  }
+  #endif // INCLUD_JFR
+
   void generate_initial() {
     // Generates all stubs and initializes the entry points.
 
@@ -2867,6 +2905,7 @@ class StubGenerator: public StubCodeGenerator {
     // structure. See also comment in stubRoutines.hpp.
     StubRoutines::_forward_exception_entry                 = generate_forward_exception();
 
+    assert(StubRoutines::_call_stub_return_address != NULL, "_call_stub_return_address NULL check"); // TODO: Rm this!
     StubRoutines::_call_stub_entry                         = generate_call_stub(StubRoutines::_call_stub_return_address);
     StubRoutines::_catch_exception_entry                   = generate_catch_exception();
 
@@ -2895,6 +2934,18 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::zarch::_trot_table_addr = (address)StubRoutines::zarch::_trot_table;
   }
 
+  void generate_phase1() {
+    // Continuation stubs:
+    StubRoutines::_cont_thaw          = generate_cont_thaw();
+    StubRoutines::_cont_returnBarrier = generate_cont_returnBarrier();
+    StubRoutines::_cont_returnBarrierExc = generate_cont_returnBarrier_exception();
+    StubRoutines::_cont_doYield_stub  = generate_cont_doYield();
+    StubRoutines::_cont_doYield       = StubRoutines::_cont_doYield_stub == nullptr ? nullptr
+                                      : StubRoutines::_cont_doYield_stub->entry_point();
+
+    JFR_ONLY(StubRoutines::_jfr_write_checkpoint_stub = generate_jfr_write_checkpoint();)
+    JFR_ONLY(StubRoutines::_jfr_write_checkpoint = StubRoutines::_jfr_write_checkpoint_stub->entry_point();)
+  }
 
   void generate_all() {
     // Generates all stubs and initializes the entry points.
@@ -2971,12 +3022,14 @@ class StubGenerator: public StubCodeGenerator {
   }
 
  public:
-  StubGenerator(CodeBuffer* code, bool all) : StubCodeGenerator(code) {
-    _stub_count = !all ? 0x100 : 0x200;
-    if (all) {
-      generate_all();
-    } else {
+  StubGenerator(CodeBuffer* code, int phase) : StubCodeGenerator(code) {
+    _stub_count = (phase == 0) ? 0x100 : 0x200;
+    if (phase == 0) {
       generate_initial();
+    } else if (phase == 1) {
+      generate_phase1(); // stubs that must be available for the interpreter
+    } else {
+      generate_all();
     }
   }
 
