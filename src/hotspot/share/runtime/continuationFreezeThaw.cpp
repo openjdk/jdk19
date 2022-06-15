@@ -2082,7 +2082,9 @@ void ThawBase::recurse_thaw_compiled_frame(const frame& hf, frame& caller, int n
 
   patch(f, caller, is_bottom_frame);
 
-  if (f.is_deoptimized_frame()) {
+  // f was constructed before the frames was copied to the stack, and with hf.pc(), so its deopt state is always false (maybe incorrect)
+  assert(!f.is_deoptimized_frame(), "");
+  if (hf.is_deoptimized_frame()) {
     maybe_set_fastpath(f.sp());
   } else if (_thread->is_interp_only_mode()
               || (_cont.is_preempted() && f.cb()->as_compiled_method()->is_marked_for_deoptimization())) {
