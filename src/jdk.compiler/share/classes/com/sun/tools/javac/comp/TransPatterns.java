@@ -97,6 +97,7 @@ import com.sun.tools.javac.tree.JCTree.JCSwitchExpression;
 import com.sun.tools.javac.tree.JCTree.LetExpr;
 import com.sun.tools.javac.tree.TreeInfo;
 import com.sun.tools.javac.util.Assert;
+import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 
 /**
@@ -284,7 +285,7 @@ public class TransPatterns extends TreeTranslator {
                 names.fromString(target.syntheticNameChar() + "c" + target.syntheticNameChar() + component.name),
                                  component.erasure(types),
                                  currentMethodSym);
-            Symbol accessor = getAccessor(component);
+            Symbol accessor = getAccessor(tree.pos(), component);
             JCVariableDecl nestedTempVar =
                     make.VarDef(nestedTemp,
                                 make.App(make.QualIdent(accessor),
@@ -344,12 +345,11 @@ public class TransPatterns extends TreeTranslator {
         result = test != null ? test : makeLit(syms.booleanType, 1);
     }
 
-    private MethodSymbol getAccessor(RecordComponent component) {
+    private MethodSymbol getAccessor(DiagnosticPosition pos, RecordComponent component) {
         return component2Proxy.computeIfAbsent(component, c -> {
-            MethodSymbol realAccessor = (MethodSymbol) component.owner
-                                                 .members()
-                                                 .findFirst(component.name, s -> s.kind == Kind.MTH &&
-                                                                                 ((MethodSymbol) s).params.isEmpty());
+            MethodSymbol realAccessor =
+                    rs.resolveInternalMethod(pos, env, component.owner.type,
+                                             component.name, List.nil(), List.nil());
             MethodType type = new MethodType(List.of(component.owner.erasure(types)),
                                              types.erasure(component.type),
                                              List.nil(),
