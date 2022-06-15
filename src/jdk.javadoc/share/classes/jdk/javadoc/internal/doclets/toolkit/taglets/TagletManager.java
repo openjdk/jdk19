@@ -387,64 +387,62 @@ public class TagletManager {
                     printTagMisuseWarn(ch, taglet, tag, "inline");
                 }
 
-                if (!inlineTrees) {
-                    new SimpleElementVisitor14<Void, Void>() {
-                        @Override
-                        public Void visitModule(ModuleElement e, Void p) {
-                            if (!taglet.inModule()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "module");
-                            }
-                            return null;
+                new SimpleElementVisitor14<Void, Void>() {
+                    @Override
+                    public Void visitModule(ModuleElement e, Void p) {
+                        if (!taglet.inModule()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "module");
                         }
+                        return null;
+                    }
 
-                        @Override
-                        public Void visitPackage(PackageElement e, Void p) {
-                            if (!taglet.inPackage()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "package");
-                            }
-                            return null;
+                    @Override
+                    public Void visitPackage(PackageElement e, Void p) {
+                        if (!taglet.inPackage()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "package");
                         }
+                        return null;
+                    }
 
-                        @Override
-                        public Void visitType(TypeElement e, Void p) {
-                            if (!taglet.inType()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "class");
-                            }
-                            return null;
+                    @Override
+                    public Void visitType(TypeElement e, Void p) {
+                        if (!taglet.inType()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "class");
                         }
+                        return null;
+                    }
 
-                        @Override
-                        public Void visitExecutable(ExecutableElement e, Void p) {
-                            if (utils.isConstructor(e) && !taglet.inConstructor()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "constructor");
-                            } else if (!taglet.inMethod()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "method");
-                            }
-                            return null;
+                    @Override
+                    public Void visitExecutable(ExecutableElement e, Void p) {
+                        if (utils.isConstructor(e) && !taglet.inConstructor()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "constructor");
+                        } else if (!taglet.inMethod()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "method");
                         }
+                        return null;
+                    }
 
-                        @Override
-                        public Void visitVariable(VariableElement e, Void p) {
-                            if (utils.isField(e) && !taglet.inField()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "field");
-                            }
-                            return null;
+                    @Override
+                    public Void visitVariable(VariableElement e, Void p) {
+                        if (utils.isField(e) && !taglet.inField()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "field");
                         }
+                        return null;
+                    }
 
-                        @Override
-                        public Void visitUnknown(Element e, Void p) {
-                            if (utils.isOverviewElement(e) && !taglet.inOverview()) {
-                                printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "overview");
-                            }
-                            return null;
+                    @Override
+                    public Void visitUnknown(Element e, Void p) {
+                        if (utils.isOverviewElement(e) && !taglet.inOverview()) {
+                            printTagMisuseWarn(utils.getCommentHelper(e), taglet, tag, "overview");
                         }
+                        return null;
+                    }
 
-                        @Override
-                        protected Void defaultAction(Element e, Void p) {
-                            return null;
-                        }
-                    }.visit(element);
-                }
+                    @Override
+                    protected Void defaultAction(Element e, Void p) {
+                        return null;
+                    }
+                }.visit(element);
             }
         }
     }
