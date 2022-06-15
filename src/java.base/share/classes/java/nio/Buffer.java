@@ -37,7 +37,6 @@ import jdk.internal.vm.annotation.ForceInline;
 
 import java.io.FileDescriptor;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.MemorySession;
 import java.util.Objects;
 import java.util.Spliterator;
 
@@ -760,22 +759,17 @@ public abstract sealed class Buffer
     }
 
     @ForceInline
-    final MemorySessionImpl session() {
+    final MemorySessionImpl.State state() {
         if (segment != null) {
-            return ((AbstractMemorySegmentImpl)segment).sessionImpl();
+            return ((AbstractMemorySegmentImpl)segment).session().state();
         } else {
             return null;
         }
     }
 
-    final void checkSession() {
-        MemorySessionImpl session = session();
-        if (session != null) {
-            try {
-                session.checkValidState();
-            } catch (ScopedMemoryAccess.ScopedAccessError e) {
-                throw new IllegalStateException("This segment is already closed");
-            }
+    final void checkState() {
+        if (segment != null) {
+            MemorySessionImpl.checkValidState(segment.session());
         }
     }
 
@@ -828,16 +822,16 @@ public abstract sealed class Buffer
                 }
 
                 @Override
-                public Runnable acquireSession(Buffer buffer, boolean async) {
-                    var session = buffer.session();
-                    if (session == null) {
+                public Runnable acquire(Buffer buffer, boolean async) {
+                    var state = buffer.state();
+                    if (state == null) {
                         return null;
                     }
-                    if (async && session.ownerThread() != null) {
+                    if (async && state.ownerThread() != null) {
                         throw new IllegalStateException("Confined session not supported");
                     }
-                    session.acquire0();
-                    return session::release0;
+                    state.acquire();
+                    return state::release;
                 }
 
                 @Override

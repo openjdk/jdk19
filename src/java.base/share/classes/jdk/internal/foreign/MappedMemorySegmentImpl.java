@@ -43,8 +43,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, int mask, MemorySession session) {
-        super(min, length, mask, session);
+    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean isReadOnly, MemorySessionImpl session) {
+        super(min, length, isReadOnly, session);
         this.unmapper = unmapper;
     }
 
@@ -55,8 +55,8 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, int mask, MemorySession session) {
-        return new MappedMemorySegmentImpl(min + offset, unmapper, size, mask, session);
+    MappedMemorySegmentImpl dup(long offset, long size, boolean isReadOnly, MemorySessionImpl session) {
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, isReadOnly, session);
     }
 
     // mapped segment methods
@@ -78,25 +78,25 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     public void load() {
-        SCOPED_MEMORY_ACCESS.load(sessionImpl(), min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.load(session().state(), min, unmapper.isSync(), length);
     }
 
     public void unload() {
-        SCOPED_MEMORY_ACCESS.unload(sessionImpl(), min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.unload(session().state(), min, unmapper.isSync(), length);
     }
 
     public boolean isLoaded() {
-        return SCOPED_MEMORY_ACCESS.isLoaded(sessionImpl(), min, unmapper.isSync(), length);
+        return SCOPED_MEMORY_ACCESS.isLoaded(session().state(), min, unmapper.isSync(), length);
     }
 
     public void force() {
-        SCOPED_MEMORY_ACCESS.force(sessionImpl(), unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+        SCOPED_MEMORY_ACCESS.force(session().state(), unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
     public static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
-        public EmptyMappedMemorySegmentImpl(int modes, MemorySession session) {
-            super(0, null, 0, modes, session);
+        public EmptyMappedMemorySegmentImpl(boolean isReadOnly, MemorySessionImpl session) {
+            super(0, null, 0, isReadOnly, session);
         }
 
         @Override

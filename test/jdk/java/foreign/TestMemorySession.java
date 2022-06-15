@@ -52,6 +52,23 @@ public class TestMemorySession {
 
     final static int N_THREADS = 100;
 
+    @Test
+    public void testImplicit() {
+        AtomicInteger acc = new AtomicInteger();
+        MemorySession session = MemorySession.openImplicit();
+        for (int i = 0 ; i < N_THREADS ; i++) {
+            int delta = i;
+            session.addCloseAction(() -> acc.addAndGet(delta));
+        }
+        assertEquals(acc.get(), 0);
+
+        session = null;
+        int expected = IntStream.range(0, N_THREADS).sum();
+        while (acc.get() != expected) {
+            kickGC();
+        }
+    }
+
     @Test(dataProvider = "cleaners")
     public void testConfined(Supplier<Cleaner> cleanerSupplier, UnaryOperator<MemorySession> sessionFunc) {
         AtomicInteger acc = new AtomicInteger();
@@ -370,8 +387,8 @@ public class TestMemorySession {
     }
 
     private void keepAlive(MemorySession child, MemorySession parent) {
-        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(parent);
-        sessionImpl.acquire0();
-        child.addCloseAction(sessionImpl::release0);
+        MemorySessionImpl sessionImpl = (MemorySessionImpl)parent;
+        sessionImpl.state().acquire();
+        child.addCloseAction(sessionImpl.state()::release);
     }
 }

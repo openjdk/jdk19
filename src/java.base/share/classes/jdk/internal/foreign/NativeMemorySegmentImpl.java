@@ -41,14 +41,14 @@ import sun.security.action.GetBooleanAction;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = new NativeMemorySegmentImpl(0, Long.MAX_VALUE, 0, MemorySessionImpl.GLOBAL) {
+    public static final MemorySegment EVERYTHING = new NativeMemorySegmentImpl(0, Long.MAX_VALUE, false, MemorySessionImpl.GLOBAL) {
         @Override
         void checkBounds(long offset, long length) {
             // do nothing
         }
 
         @Override
-        NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySession scope) {
+        NativeMemorySegmentImpl dup(long offset, long size, boolean isReadOnly, MemorySessionImpl session) {
             throw new IllegalStateException();
         }
     };
@@ -64,8 +64,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, int mask, MemorySession session) {
-        super(length, mask, session);
+    NativeMemorySegmentImpl(long min, long length, boolean isReadOnly, MemorySessionImpl session) {
+        super(length, isReadOnly, session);
         this.min = min;
     }
 
@@ -73,12 +73,12 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     @Override
     public MemoryAddress address() {
         checkValidState();
-        return MemoryAddress.ofLong(unsafeGetOffset());
+        return MemoryAddress.ofLong(min());
     }
 
     @Override
-    NativeMemorySegmentImpl dup(long offset, long size, int mask, MemorySession session) {
-        return new NativeMemorySegmentImpl(min + offset, size, mask, session);
+    NativeMemorySegmentImpl dup(long offset, long size, boolean isReadOnly, MemorySessionImpl session) {
+        return new NativeMemorySegmentImpl(min + offset, size, isReadOnly, session);
     }
 
     @Override
@@ -93,12 +93,12 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    long min() {
+    public long min() {
         return min;
     }
 
     @Override
-    Object base() {
+    public Object base() {
         return null;
     }
 
@@ -110,8 +110,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     // factories
 
     public static MemorySegment makeNativeSegment(long bytesSize, long alignmentBytes, MemorySession session) {
-        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
-        sessionImpl.checkValidStateSlow();
+        MemorySessionImpl.checkValidState(session);
         if (VM.isDirectMemoryPageAligned()) {
             alignmentBytes = Math.max(alignmentBytes, nioAccess.pageSize());
         }
@@ -127,8 +126,8 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                DEFAULT_MODES, session);
-        sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+                false, (MemorySessionImpl)session);
+        MemorySessionImpl.addOrCleanupIfFail(session, new MemorySessionImpl.State.ResourceCleanup() {
             @Override
             public void cleanup() {
                 unsafe.freeMemory(buf);
@@ -143,9 +142,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, MemorySession session) {
-        MemorySessionImpl sessionImpl = MemorySessionImpl.toSessionImpl(session);
-        sessionImpl.checkValidStateSlow();
-        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, DEFAULT_MODES, session);
-        return segment;
+        MemorySessionImpl.checkValidState(session);
+        return new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, false, (MemorySessionImpl)session);
     }
 }

@@ -49,7 +49,7 @@ public class UpcallStubs {
     }
 
     static MemorySegment makeUpcall(long entry, MemorySession session) {
-        MemorySessionImpl.toSessionImpl(session).addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
+        MemorySessionImpl.addOrCleanupIfFail(session, new MemorySessionImpl.State.ResourceCleanup() {
             @Override
             public void cleanup() {
                 freeUpcallStub(entry);

@@ -86,6 +86,8 @@ public class BindingSpecializer {
     private static final String ALLOCATOR_DESC = methodType(SegmentAllocator.class).descriptorString();
     private static final String SESSION_DESC = methodType(MemorySession.class).descriptorString();
     private static final String SESSION_IMPL_DESC = methodType(MemorySessionImpl.class).descriptorString();
+
+    private static final String SESSION_STATE_DESC = methodType(MemorySessionImpl.State.class).descriptorString();
     private static final String CLOSE_DESC = VOID_DESC;
     private static final String ADDRESS_DESC = methodType(MemoryAddress.class).descriptorString();
     private static final String COPY_DESC = methodType(void.class, MemorySegment.class, long.class, MemorySegment.class, long.class, long.class).descriptorString();
@@ -494,7 +496,8 @@ public class BindingSpecializer {
 
     private void emitAcquireScope() {
         emitCheckCast(Scoped.class);
-        emitInvokeInterface(Scoped.class, "sessionImpl", SESSION_IMPL_DESC);
+        emitInvokeInterface(Scoped.class, "session", SESSION_IMPL_DESC);
+        emitInvokeVirtual(MemorySessionImpl.class, "state", SESSION_STATE_DESC);
         Label skipAcquire = new Label();
         Label end = new Label();
 
@@ -511,7 +514,7 @@ public class BindingSpecializer {
         emitDup(Object.class);
         int nextScopeLocal = scopeSlots[curScopeLocalIdx++];
         emitStore(Object.class, nextScopeLocal); // store off one to release later
-        emitInvokeVirtual(MemorySessionImpl.class, "acquire0", ACQUIRE0_DESC); // call acquire on the other
+        emitInvokeVirtual(MemorySessionImpl.State.class, "acquire", ACQUIRE0_DESC); // call acquire on the other
 
         if (hasOtherScopes) { // avoid ASM generating a bunch of nops for the dead code
             mv.visitJumpInsn(GOTO, end);
@@ -530,7 +533,7 @@ public class BindingSpecializer {
             emitLoad(Object.class, scopeLocal);
             mv.visitJumpInsn(IFNULL, skipRelease);
             emitLoad(Object.class, scopeLocal);
-            emitInvokeVirtual(MemorySessionImpl.class, "release0", RELEASE0_DESC);
+            emitInvokeVirtual(MemorySessionImpl.State.class, "release", RELEASE0_DESC);
             mv.visitLabel(skipRelease);
         }
     }
