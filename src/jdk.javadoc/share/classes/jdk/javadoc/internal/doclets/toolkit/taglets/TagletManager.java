@@ -354,9 +354,8 @@ public class TagletManager {
      *
      * @param element the tags holder
      * @param trees the trees containing the comments
-     * @param inlineTrees true if the trees are inline and false otherwise
      */
-    public void checkTags(Element element, Iterable<? extends DocTree> trees, boolean inlineTrees) {
+    public void checkTags(Element element, Iterable<? extends DocTree> trees) {
         CommentHelper ch = utils.getCommentHelper(element);
         for (DocTree tag : trees) {
             String name = tag.getKind().tagName;
@@ -381,10 +380,6 @@ public class TagletManager {
                 if (taglet instanceof SimpleTaglet st && !st.enabled) {
                     // taglet has been disabled
                     return;
-                }
-
-                if (inlineTrees && !taglet.isInlineTag()) {
-                    printTagMisuseWarn(ch, taglet, tag, "inline");
                 }
 
                 new SimpleElementVisitor14<Void, Void>() {
@@ -479,22 +474,13 @@ public class TagletManager {
         if (taglet.inMethod()) {
             locationsSet.add("method");
         }
-        if (taglet.isInlineTag()) {
-            locationsSet.add("inline text");
-        }
         if (locationsSet.isEmpty()) {
             //This known tag is excluded.
             return;
         }
-        StringBuilder combined_locations = new StringBuilder();
-        for (String location: locationsSet) {
-            if (combined_locations.length() > 0) {
-                combined_locations.append(", ");
-            }
-            combined_locations.append(location);
-        }
+        var combined_locations = String.join(", ", locationsSet);
         messages.warning(ch.getDocTreePath(tag), "doclet.tag_misuse",
-            "@" + taglet.getName(), holderType, combined_locations.toString());
+            "@" + taglet.getName(), holderType, combined_locations);
     }
 
     /**
