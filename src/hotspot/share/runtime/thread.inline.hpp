@@ -149,7 +149,7 @@ class AsyncExceptionHandshake : public AsyncHandshakeClosure {
   ~AsyncExceptionHandshake() {
     Thread* current = Thread::current();
     if (current->is_Java_thread()) {
-      guarantee(!JavaThread::cast(current)->is_gc_barrier_detached(),
+      guarantee(!JavaThread::cast(current)->cannot_access_oops_safely(),
                 "JavaThread cannot touch oops after its GC barrier is detached.");
     }
     assert(!_exception.is_empty(), "invariant");
