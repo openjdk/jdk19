@@ -919,6 +919,10 @@ class JavaThread: public Thread {
   //
   // _vm_exited is a special value to cover the case of a JavaThread
   // executing native code after the VM itself is terminated.
+  //
+  // A JavaThread that fails to JNI attach has these _terminated field transitions:
+  //   _not_terminated => _thread_terminated
+  //
   volatile TerminatedTypes _terminated;
 
   jint                  _in_deopt_handler;       // count of deoptimization
@@ -1177,7 +1181,7 @@ private:
   // or thread is terminated
   bool is_exiting() const;
   // thread's GC barrier is detached or thread is terminated
-  bool is_gc_barrier_detached() const;
+  bool cannot_access_oops_safely() const;
   // thread is terminated (no longer on the threads list); we compare
   // against the three non-terminated values so that a freed JavaThread
   // will also be considered terminated.
