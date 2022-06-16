@@ -218,7 +218,7 @@ public final class MetadataRepository {
         EventConfiguration configuration = newEventConfiguration(eventType, ec, settings);
         PlatformEventType pe = configuration.getPlatformEventType();
         pe.setRegistered(true);
-        if (jvm.isInstrumented(eventClass)) {
+        if (jvm.isInstrumented(eventClass) || !Utils.shouldInstrument(pe.isJDK(), pe.getName())) {
             pe.setInstrumented();
         }
         Utils.setConfiguration(eventClass, configuration);
