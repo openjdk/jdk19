@@ -298,6 +298,57 @@ public final class JPackageCommand extends CommandArguments<JPackageCommand> {
         return this;
     }
 
+    public void createJPackageXMLFile(String mainLauncher, String mainClass)
+            throws IOException {
+        String appImage = getArgumentValue("--app-image");
+        if (appImage == null) {
+            throw new RuntimeException("Error: --app-image expected");
+        }
+
+        final String version = System.getProperty("java.version");
+        final String platform;
+
+        if (TKit.isWindows()) {
+            platform = "windows";
+        } else if (TKit.isLinux()) {
+            platform = "linux";
+        } else if (TKit.isOSX()) {
+            platform = "macOS";
+        } else {
+            platform = "unknown";
+        }
+
+        ApplicationLayout layout = ApplicationLayout.platformAppImage();
+        Path jpackageXMLFile = layout.resolveAt(Path.of(appImage))
+                .appDirectory().resolve(".jpackage.xml");
+
+        TKit.createXml(jpackageXMLFile, xml -> {
+                xml.writeStartElement("jpackage-state");
+                xml.writeAttribute("version", version);
+                xml.writeAttribute("platform", platform);
+
+                xml.writeStartElement("app-version");
+                xml.writeCharacters("1.0");
+                xml.writeEndElement();
+
+                xml.writeStartElement("main-launcher");
+                xml.writeCharacters(mainLauncher);
+                xml.writeEndElement();
+
+                xml.writeStartElement("main-class");
+                xml.writeCharacters(mainClass);
+                xml.writeEndElement();
+
+                xml.writeStartElement("signed");
+                xml.writeCharacters("false");
+                xml.writeEndElement();
+
+                xml.writeStartElement("app-store");
+                xml.writeCharacters("false");
+                xml.writeEndElement();
+            });
+    }
+
     JPackageCommand addPrerequisiteAction(ThrowingConsumer<JPackageCommand> action) {
         verifyMutable();
         prerequisiteActions.add(action);

@@ -108,14 +108,12 @@ public final class PredefinedAppImageErrorTest {
         Path dummyAppFolder
             = TKit.createTempDirectory("DummyAppImage").toAbsolutePath();
 
-        TKit.createJPackageXMLFile(dummyAppFolder,
-                "PredefinedAppImageErrorTest", "Hello");
-
         Path dummyAppFile
             = dummyAppFolder.resolve("DummyAppFile").toAbsolutePath();
         Files.createFile(dummyAppFile);
 
         cmd.addArguments("--app-image", dummyAppFolder.toString());
+        cmd.createJPackageXMLFile("PredefinedAppImageErrorTest", "Hello");
     }
 
 }

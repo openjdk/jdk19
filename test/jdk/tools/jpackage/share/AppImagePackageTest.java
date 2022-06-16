@@ -74,8 +74,6 @@ public class AppImagePackageTest {
         final String name = "EmptyAppImagePackageTest";
         final String imageName = name + (TKit.isOSX() ? ".app" : "");
         Path appImageDir = TKit.createTempDirectory(null).resolve(imageName);
-        TKit.createJPackageXMLFile(appImageDir,
-                "EmptyAppImagePackageTest", "Hello");
 
         Files.createDirectories(appImageDir.resolve("bin"));
         Path libDir = Files.createDirectories(appImageDir.resolve("lib"));
@@ -89,6 +87,7 @@ public class AppImagePackageTest {
                 cmd.addArguments("--icon", iconPath("icon"));
             }
             cmd.removeArgumentWithValue("--input");
+            cmd.createJPackageXMLFile("EmptyAppImagePackageTest", "Hello");
 
             // on mac, with --app-image and without --mac-package-identifier,
             // will try to infer it from the image, so foreign image needs it.

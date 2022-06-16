@@ -64,8 +64,8 @@ public final class AppImageFile {
     private final String launcherName;
     private final String mainClass;
     private final List<LauncherInfo> addLauncherInfos;
-    private final String signedStr;
-    private final String appStoreStr;
+    private final boolean signed;
+    private final boolean appStore;
 
     private static final String FILENAME = ".jpackage.xml";
 
@@ -73,16 +73,54 @@ public final class AppImageFile {
             Platform.LINUX, "linux", Platform.WINDOWS, "windows", Platform.MAC,
             "macOS");
 
-    private AppImageFile(String launcherName, String mainClass,
+    private AppImageFile(Path appImageDir, String launcherName, String mainClass,
             List<LauncherInfo> launcherInfos, String creatorVersion,
             String creatorPlatform, String signedStr, String appStoreStr) {
+        boolean isValid = true;
+        if (!Objects.equals(getVersion(), creatorVersion)) {
+            isValid = false;
+        }
+
+        if (!Objects.equals(getPlatform(), creatorPlatform)) {
+            isValid = false;
+        }
+
+        if (launcherName == null || launcherName.length() == 0) {
+            isValid = false;
+        }
+
+        if (mainClass == null || mainClass.length() == 0) {
+            isValid = false;
+        }
+
+        for (var launcher : launcherInfos) {
+            if ("".equals(launcher.getName())) {
+                isValid = false;
+            }
+        }
+
+        if (signedStr == null ||
+                !("true".equals(signedStr) || "false".equals(signedStr))) {
+            isValid = false;
+        }
+
+        if (appStoreStr == null ||
+                !("true".equals(appStoreStr) || "false".equals(appStoreStr))) {
+            isValid = false;
+        }
+
+        if (!isValid) {
+            throw new RuntimeException(MessageFormat.format(I18N.getString(
+                "error.invalid-app-image"), appImageDir));
+        }
+
         this.launcherName = launcherName;
         this.mainClass = mainClass;
         this.addLauncherInfos = launcherInfos;
         this.creatorVersion = creatorVersion;
         this.creatorPlatform = creatorPlatform;
-        this.signedStr = signedStr;
-        this.appStoreStr = appStoreStr;
+        this.signed = "true".equals(signedStr);
+        this.appStore = "true".equals(appStoreStr);
     }
 
     /**
@@ -109,11 +147,11 @@ public final class AppImageFile {
     }
 
     boolean isSigned() {
-        return "true".equals(signedStr);
+        return signed;
     }
 
     boolean isAppStore() {
-        return "true".equals(appStoreStr);
+        return appStore;
     }
 
     /**
@@ -214,13 +252,8 @@ public final class AppImageFile {
                  launcherInfos.add(new LauncherInfo(launcherNodes.item(i)));
             }
 
-            AppImageFile file = new AppImageFile(mainLauncher, mainClass,
+            return new AppImageFile(appImageDir, mainLauncher, mainClass,
                     launcherInfos, version, platform, signedStr, appStoreStr);
-            if (!file.isValid()) {
-                throw new RuntimeException(MessageFormat.format(I18N.getString(
-                        "error.invalid-app-image"), appImageDir));
-            }
-            return file;
         } catch (XPathExpressionException ex) {
             // This should never happen as XPath expressions should be correct
             throw new RuntimeException(ex);
@@ -303,42 +336,6 @@ public final class AppImageFile {
 
     static String getPlatform() {
         return PLATFORM_LABELS.get(Platform.getPlatform());
-    }
-
-    private boolean isValid() {
-        if (!Objects.equals(getVersion(), creatorVersion)) {
-            return false;
-        }
-
-        if (!Objects.equals(getPlatform(), creatorPlatform)) {
-            return false;
-        }
-
-        if (launcherName == null || launcherName.length() == 0) {
-            return false;
-        }
-
-        if (mainClass == null || mainClass.length() == 0) {
-            return false;
-        }
-
-        for (var launcher : addLauncherInfos) {
-            if ("".equals(launcher.getName())) {
-                return false;
-            }
-        }
-
-        if (signedStr == null ||
-                !("true".equals(signedStr) || "false".equals(signedStr))) {
-            return false;
-        }
-
-        if (appStoreStr == null ||
-                !("true".equals(appStoreStr) || "false".equals(appStoreStr))) {
-            return false;
-        }
-
-        return true;
     }
 
     static class LauncherInfo {

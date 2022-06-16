@@ -27,7 +27,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Writer;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,6 +51,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -58,6 +63,9 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import jdk.jpackage.test.Functional.ExceptionBox;
 import jdk.jpackage.test.Functional.ThrowingConsumer;
 import jdk.jpackage.test.Functional.ThrowingRunnable;
@@ -233,41 +241,93 @@ final public class TKit {
         trace("Done");
     }
 
-    public static void createJPackageXMLFile(Path appImageDir,
-            String mainLauncher, String mainClass) throws IOException {
-        String version = System.getProperty("java.version");
-        String platform = "";
-        Path appDir = appImageDir;
-        if (TKit.isWindows()) {
-            platform = "windows";
-            appDir = Files.createDirectories(
-                         appImageDir.resolve("app"));
-        } else if (TKit.isLinux()) {
-            platform = "linux";
-            appDir = Files.createDirectories(
-                         appImageDir.resolve("lib").resolve("app"));
-        } else if (TKit.isOSX()) {
-            platform = "macOS";
-            appDir = Files.createDirectories(
-                         appImageDir.resolve("Contents").resolve("app"));
+    @FunctionalInterface
+    public static interface XmlConsumer {
+        void accept(XMLStreamWriter xml) throws IOException, XMLStreamException;
+    }
+
+    private static class PrettyPrintHandler implements InvocationHandler {
+
+        PrettyPrintHandler(XMLStreamWriter target) {
+            this.target = target;
         }
 
-        TKit.createTextFile(appDir.resolve(".jpackage.xml"), List.of(
-                            "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
-                            String.format(
-                                "<jpackage-state platform=\"%s\" version=\"%s\">",
-                                platform, version),
-                            "<app-version>1.0</app-version>",
-                            String.format(
-                                "<main-launcher>%s</main-launcher>",
-                                mainLauncher),
-                            String.format(
-                                "<main-class>%s</main-class>",
-                                mainClass),
-                            "<signed>false</signed>",
-                            "<app-store>false</app-store>",
-                            "</jpackage-state>"
-            ));
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws
+                Throwable {
+            switch (method.getName()) {
+                case "writeStartElement":
+                    // update state of parent node
+                    if (depth > 0) {
+                        hasChildElement.put(depth - 1, true);
+                    }
+                    // reset state of current node
+                    hasChildElement.put(depth, false);
+                    // indent for current depth
+                    target.writeCharacters(EOL);
+                    target.writeCharacters(repeat(depth, INDENT));
+                    depth++;
+                    break;
+                case "writeEndElement":
+                    depth--;
+                    if (hasChildElement.get(depth) == true) {
+                        target.writeCharacters(EOL);
+                        target.writeCharacters(repeat(depth, INDENT));
+                    }
+                    break;
+                case "writeProcessingInstruction":
+                case "writeEmptyElement":
+                    // update state of parent node
+                    if (depth > 0) {
+                        hasChildElement.put(depth - 1, true);
+                    }
+                    // indent for current depth
+                    target.writeCharacters(EOL);
+                    target.writeCharacters(repeat(depth, INDENT));
+                    break;
+                default:
+                    break;
+            }
+            method.invoke(target, args);
+            return null;
+        }
+
+        private static String repeat(int d, String s) {
+            StringBuilder sb = new StringBuilder();
+            while (d-- > 0) {
+                sb.append(s);
+            }
+            return sb.toString();
+        }
+
+        private final XMLStreamWriter target;
+        private int depth = 0;
+        private final Map<Integer, Boolean> hasChildElement = new HashMap<>();
+        private static final String INDENT = "  ";
+        private static final String EOL = "\n";
+    }
+
+    public static void createXml(Path dstFile, XmlConsumer xmlConsumer) throws
+            IOException {
+        XMLOutputFactory xmlFactory = XMLOutputFactory.newInstance();
+        Files.createDirectories(dstFile.getParent());
+        try (Writer w = Files.newBufferedWriter(dstFile)) {
+            // Wrap with pretty print proxy
+            XMLStreamWriter xml = (XMLStreamWriter) Proxy.newProxyInstance(
+                    XMLStreamWriter.class.getClassLoader(), new Class<?>[]{
+                XMLStreamWriter.class}, new PrettyPrintHandler(
+                    xmlFactory.createXMLStreamWriter(w)));
+
+            xml.writeStartDocument();
+            xmlConsumer.accept(xml);
+            xml.writeEndDocument();
+            xml.flush();
+            xml.close();
+        } catch (XMLStreamException ex) {
+            throw new IOException(ex);
+        } catch (IOException ex) {
+            throw ex;
+        }
     }
 
     public static void createPropertiesFile(Path propsFilename,
