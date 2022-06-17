@@ -28,7 +28,6 @@
  * @library /test/lib
  * @run main compiler.codegen.ShiftByZero
  * @run main/othervm -Xbatch -XX:-TieredCompilation
- * -XX:+PrintOptoAssembly
  * compiler.codegen.ShiftByZero
  */
 
