@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @bug 8035473 8288692
  * @summary Determine if proper warning messages are printed.
  * @library ../../lib
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
