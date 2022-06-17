@@ -266,10 +266,10 @@ inline bool JavaThread::is_exiting() const {
          check_is_terminated(l_terminated);
 }
 
-inline bool JavaThread::cannot_access_oops_safely() const {
+inline bool JavaThread::is_oop_safe() const {
   TerminatedTypes l_terminated = Atomic::load_acquire(&_terminated);
-  return l_terminated == _thread_gc_barrier_detached ||
-         check_is_terminated(l_terminated);
+  return l_terminated != _thread_gc_barrier_detached &&
+         !check_is_terminated(l_terminated);
 }
 
 inline bool JavaThread::is_terminated() const {

@@ -1180,8 +1180,8 @@ private:
   // thread has called JavaThread::exit(), thread's GC barrier is detached
   // or thread is terminated
   bool is_exiting() const;
-  // thread's GC barrier is detached or thread is terminated
-  bool cannot_access_oops_safely() const;
+  // thread's GC barrier is NOT detached and thread is NOT terminated
+  bool is_oop_safe() const;
   // thread is terminated (no longer on the threads list); we compare
   // against the three non-terminated values so that a freed JavaThread
   // will also be considered terminated.
