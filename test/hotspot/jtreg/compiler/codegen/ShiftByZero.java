@@ -44,8 +44,8 @@ public class ShiftByZero {
         for (int i8 = 279; i8 > 1; --i8) {
             shift <<= 6;
         }
-        // low 6 bits of i1 are 0, so shift by i1 can be
-        // simplified to shift by 0
+        // low 6 bits of shift are 0, so shift can be
+        // simplified to constant 0
         {
             for (int i = 0; i < N; ++i) {
                 i32[i] += i32[i] >>= shift;
