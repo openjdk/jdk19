@@ -1206,7 +1206,8 @@ public class FileChannelImpl
     {
         Objects.requireNonNull(mode,"Mode is null");
         Objects.requireNonNull(session, "Session is null");
-        MemorySessionImpl.checkValidState(session);
+        MemorySessionImpl sessionImpl = (MemorySessionImpl)session;
+        sessionImpl.checkValidState();
         if (offset < 0)
             throw new IllegalArgumentException("Requested bytes offset must be >= 0.");
         if (size < 0)
@@ -1215,21 +1216,25 @@ public class FileChannelImpl
         boolean isSync = isSync(mode);
         int prot = toProt(mode);
         Unmapper unmapper = mapInternal(mode, offset, size, prot, isSync);
-        boolean isReadOnly = (mode == MapMode.READ_ONLY);
+        boolean readOnly = false;
+        if (mode == MapMode.READ_ONLY) {
+            readOnly = true;
+        }
         if (unmapper != null) {
             AbstractMemorySegmentImpl segment =
                 new MappedMemorySegmentImpl(unmapper.address(), unmapper, size,
-                                            isReadOnly, (MemorySessionImpl)session);
-            MemorySessionImpl.addOrCleanupIfFail(session,
-                new MemorySessionImpl.State.ResourceCleanup() {
+                                            readOnly, sessionImpl);
+            MemorySessionImpl.ResourceList.ResourceCleanup resource =
+                new MemorySessionImpl.ResourceList.ResourceCleanup() {
                     @Override
                     public void cleanup() {
                         unmapper.unmap();
                     }
-                });
+                };
+            sessionImpl.addOrCleanupIfFail(resource);
             return segment;
         } else {
-            return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(isReadOnly, (MemorySessionImpl)session);
+            return new MappedMemorySegmentImpl.EmptyMappedMemorySegmentImpl(readOnly, sessionImpl);
         }
     }
 

@@ -64,9 +64,9 @@ public non-sealed class WinVaList implements VaList, Scoped {
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
     private MemorySegment segment;
-    private final MemorySession session;
+    private final MemorySessionImpl session;
 
-    private WinVaList(MemorySegment segment, MemorySession session) {
+    private WinVaList(MemorySegment segment, MemorySessionImpl session) {
         this.segment = segment;
         this.session = session;
     }
@@ -133,14 +133,14 @@ public non-sealed class WinVaList implements VaList, Scoped {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
-        MemorySessionImpl.checkValidState(session);
+        session.checkValidState();
         Stream.of(layouts).forEach(Objects::requireNonNull);
         segment = segment.asSlice(layouts.length * VA_SLOT_SIZE_BYTES);
     }
 
     static WinVaList ofAddress(MemoryAddress addr, MemorySession session) {
         MemorySegment segment = MemorySegment.ofAddress(addr, Long.MAX_VALUE, session);
-        return new WinVaList(segment, session);
+        return new WinVaList(segment, (MemorySessionImpl)session);
     }
 
     static Builder builder(MemorySession session) {
@@ -149,12 +149,12 @@ public non-sealed class WinVaList implements VaList, Scoped {
 
     @Override
     public MemorySessionImpl session() {
-        return (MemorySessionImpl)session;
+        return session;
     }
 
     @Override
     public VaList copy() {
-        MemorySessionImpl.checkValidState(session);
+        session.checkValidState();
         return new WinVaList(segment, session);
     }
 
@@ -165,12 +165,12 @@ public non-sealed class WinVaList implements VaList, Scoped {
 
     public static non-sealed class Builder implements VaList.Builder {
 
-        private final MemorySession session;
+        private final MemorySessionImpl session;
         private final List<SimpleVaArg> args = new ArrayList<>();
 
         public Builder(MemorySession session) {
-            MemorySessionImpl.checkValidState(session);
-            this.session = session;
+            ((MemorySessionImpl)session).checkValidState();
+            this.session = (MemorySessionImpl)session;
         }
 
         private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {

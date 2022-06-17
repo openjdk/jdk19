@@ -28,7 +28,6 @@ package java.nio;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
-import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
@@ -759,17 +758,18 @@ public abstract sealed class Buffer
     }
 
     @ForceInline
-    final MemorySessionImpl.State state() {
+    final MemorySessionImpl session() {
         if (segment != null) {
-            return ((AbstractMemorySegmentImpl)segment).session().state();
+            return (MemorySessionImpl)segment.session();
         } else {
             return null;
         }
     }
 
-    final void checkState() {
-        if (segment != null) {
-            MemorySessionImpl.checkValidState(segment.session());
+    final void checkSession() {
+        MemorySessionImpl session = session();
+        if (session != null) {
+            session.checkValidState();
         }
     }
 
@@ -822,16 +822,16 @@ public abstract sealed class Buffer
                 }
 
                 @Override
-                public Runnable acquire(Buffer buffer, boolean async) {
-                    var state = buffer.state();
-                    if (state == null) {
+                public Runnable acquireSession(Buffer buffer, boolean async) {
+                    var session = buffer.session();
+                    if (session == null) {
                         return null;
                     }
-                    if (async && state.ownerThread() != null) {
+                    if (async && session.ownerThread() != null) {
                         throw new IllegalStateException("Confined session not supported");
                     }
-                    state.acquire();
-                    return state::release;
+                    session.acquire0();
+                    return session::release0;
                 }
 
                 @Override

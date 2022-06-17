@@ -32,12 +32,12 @@ import java.lang.ref.Cleaner;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
- * A confined session state, which features an owner thread. Because of this restriction, acquire and release
- * can be implemented cheaply, with a plain field update. Closing the state is also cheap (since the liveness
- * bit cannot be updated concurrently from other threads). Some extra complexity is required to support release
- * operations triggered by threads other than the owner thread, which we support.
+ * A confined session, which features an owner thread. The liveness check features an additional
+ * confinement check - that is, calling any operation on this session from a thread other than the
+ * owner thread will result in an exception. Because of this restriction, checking the liveness bit
+ * can be performed in plain mode.
  */
-final class ConfinedSessionState extends MemorySessionImpl.State {
+final class ConfinedSession extends MemorySessionImpl {
 
     private int asyncReleaseCount = 0;
 
@@ -45,25 +45,20 @@ final class ConfinedSessionState extends MemorySessionImpl.State {
 
     static {
         try {
-            ASYNC_RELEASE_COUNT = MethodHandles.lookup().findVarHandle(ConfinedSessionState.class, "asyncReleaseCount", int.class);
+            ASYNC_RELEASE_COUNT = MethodHandles.lookup().findVarHandle(ConfinedSession.class, "asyncReleaseCount", int.class);
         } catch (Throwable ex) {
             throw new ExceptionInInitializerError(ex);
         }
     }
 
-    ConfinedSessionState(Thread owner, Cleaner cleaner) {
-        super(owner, new ConfinedList(), cleaner);
-    }
-
-    @Override
-    boolean isAlive() {
-        return state != CLOSED;
+    public ConfinedSession(Thread owner, Cleaner cleaner) {
+        super(owner, new ConfinedResourceList(), cleaner);
     }
 
     @Override
     @ForceInline
-    public void acquire() {
-        checkValidStateWrapException();
+    public void acquire0() {
+        checkValidState();
         if (state == MAX_FORKS) {
             throw tooManyAcquires();
         }
@@ -72,7 +67,7 @@ final class ConfinedSessionState extends MemorySessionImpl.State {
 
     @Override
     @ForceInline
-    public void release() {
+    public void release0() {
         if (Thread.currentThread() == owner) {
             state--;
         } else {
@@ -85,7 +80,7 @@ final class ConfinedSessionState extends MemorySessionImpl.State {
     }
 
     void justClose() {
-        checkValidStateWrapException();
+        checkValidState();
         if (state == 0 || state - ((int)ASYNC_RELEASE_COUNT.getVolatile(this)) == 0) {
             state = CLOSED;
         } else {
@@ -96,7 +91,7 @@ final class ConfinedSessionState extends MemorySessionImpl.State {
     /**
      * A confined resource list; no races are possible here.
      */
-    static final class ConfinedList extends ResourceList {
+    static final class ConfinedResourceList extends ResourceList {
         @Override
         void add(ResourceCleanup cleanup) {
             if (fst != ResourceCleanup.CLOSED_LIST) {

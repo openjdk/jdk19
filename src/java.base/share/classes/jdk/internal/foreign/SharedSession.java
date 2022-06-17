@@ -28,32 +28,29 @@ package jdk.internal.foreign;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.lang.ref.Cleaner;
-import java.lang.ref.Reference;
-
 import jdk.internal.misc.ScopedMemoryAccess;
-import jdk.internal.ref.CleanerFactory;
 import jdk.internal.vm.annotation.ForceInline;
 
 /**
- * A shared session state, which can be manipulated by multiple threads. Closing a shared state has to ensure that
- * (i) only one thread can successfully close the state (e.g. in a close vs. close race) and that
- * (ii) no other thread is accessing the memory associated with this state while the state is being
+ * A shared session, which can be shared across multiple threads. Closing a shared session has to ensure that
+ * (i) only one thread can successfully close a session (e.g. in a close vs. close race) and that
+ * (ii) no other thread is accessing the memory associated with this session while the segment is being
  * closed. To ensure the former condition, a CAS is performed on the liveness bit. Ensuring the latter
  * is trickier, and require a complex synchronization protocol (see {@link jdk.internal.misc.ScopedMemoryAccess}).
  * Since it is the responsibility of the closing thread to make sure that no concurrent access is possible,
  * checking the liveness bit upon access can be performed in plain mode, as in the confined case.
  */
-class SharedSessionState extends MemorySessionImpl.State {
+class SharedSession extends MemorySessionImpl {
 
     private static final ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    SharedSessionState(Cleaner cleaner) {
-        super(null, new SharedList(), cleaner);
+    SharedSession(Cleaner cleaner) {
+        super(null, new SharedResourceList(), cleaner);
     }
 
     @Override
     @ForceInline
-    public void acquire() {
+    public void acquire0() {
         int value;
         do {
             value = (int) STATE.getVolatile(this);
@@ -69,7 +66,7 @@ class SharedSessionState extends MemorySessionImpl.State {
 
     @Override
     @ForceInline
-    public void release() {
+    public void release0() {
         int value;
         do {
             value = (int) STATE.getVolatile(this);
@@ -94,15 +91,10 @@ class SharedSessionState extends MemorySessionImpl.State {
         }
     }
 
-    @Override
-    boolean isAlive() {
-        return (int) STATE.getVolatile(this) != CLOSED;
-    }
-
     /**
      * A shared resource list; this implementation has to handle add vs. add races, as well as add vs. cleanup races.
      */
-    static class SharedList extends ResourceList {
+    static class SharedResourceList extends ResourceList {
 
         static final VarHandle FST;
 
@@ -151,25 +143,4 @@ class SharedSessionState extends MemorySessionImpl.State {
             }
         }
     }
-
-    static final class OfImplicit extends SharedSessionState {
-        OfImplicit() {
-            super(CleanerFactory.cleaner());
-        }
-
-        @Override
-        public void acquire() {
-            // do nothing
-        }
-
-        public boolean isImplicit() {
-            return true;
-        }
-
-        @Override
-        public void release() {
-            Reference.reachabilityFence(this);
-        }
-    }
-
 }

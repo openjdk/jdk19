@@ -1076,13 +1076,13 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         srcImpl.checkAccess(srcOffset, size, true);
         dstImpl.checkAccess(dstOffset, size, false);
         if (srcElementLayout.byteSize() == 1 || srcElementLayout.order() == dstElementLayout.order()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.session().state(), dstImpl.session().state(),
-                    srcImpl.base(), srcImpl.min() + srcOffset,
-                    dstImpl.base(), dstImpl.min() + dstOffset, size);
+            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.session().baseSession(), dstImpl.session().baseSession(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size);
         } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.session().state(), dstImpl.session().state(),
-                    srcImpl.base(), srcImpl.min() + srcOffset,
-                    dstImpl.base(), dstImpl.min() + dstOffset, size, srcElementLayout.byteSize());
+            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.session().baseSession(), dstImpl.session().baseSession(),
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
+                    dstImpl.unsafeGetBase(), dstImpl.unsafeGetOffset() + dstOffset, size, srcElementLayout.byteSize());
         }
     }
 
@@ -1889,12 +1889,12 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         srcImpl.checkAccess(srcOffset, elementCount * dstWidth, true);
         Objects.checkFromIndexSize(dstIndex, elementCount, Array.getLength(dstArray));
         if (dstWidth == 1 || srcLayout.order() == ByteOrder.nativeOrder()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.session().state(), null,
-                    srcImpl.base(), srcImpl.min() + srcOffset,
+            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(srcImpl.session().baseSession(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth);
         } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.session().state(), null,
-                    srcImpl.base(), srcImpl.min() + srcOffset,
+            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(srcImpl.session().baseSession(), null,
+                    srcImpl.unsafeGetBase(), srcImpl.unsafeGetOffset() + srcOffset,
                     dstArray, dstBase + (dstIndex * dstWidth), elementCount * dstWidth, dstWidth);
         }
     }
@@ -1941,13 +1941,13 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         }
         destImpl.checkAccess(dstOffset, elementCount * srcWidth, false);
         if (srcWidth == 1 || dstLayout.order() == ByteOrder.nativeOrder()) {
-            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(null, destImpl.session().state(),
+            ScopedMemoryAccess.getScopedMemoryAccess().copyMemory(null, destImpl.session().baseSession(),
                     srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.base(), destImpl.min() + dstOffset, elementCount * srcWidth);
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth);
         } else {
-            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(null, destImpl.session().state(),
+            ScopedMemoryAccess.getScopedMemoryAccess().copySwapMemory(null, destImpl.session().baseSession(),
                     srcArray, srcBase + (srcIndex * srcWidth),
-                    destImpl.base(), destImpl.min() + dstOffset, elementCount * srcWidth, srcWidth);
+                    destImpl.unsafeGetBase(), destImpl.unsafeGetOffset() + dstOffset, elementCount * srcWidth, srcWidth);
         }
     }
 

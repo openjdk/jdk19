@@ -53,9 +53,9 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
     private static final VaList EMPTY = new SharedUtils.EmptyVaList(MemoryAddress.NULL);
 
     private MemorySegment segment;
-    private final MemorySession session;
+    private final MemorySessionImpl session;
 
-    private MacOsAArch64VaList(MemorySegment segment, MemorySession session) {
+    private MacOsAArch64VaList(MemorySegment segment, MemorySessionImpl session) {
         this.segment = segment;
         this.session = session;
     }
@@ -127,7 +127,7 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
     @Override
     public void skip(MemoryLayout... layouts) {
         Objects.requireNonNull(layouts);
-        MemorySessionImpl.checkValidState(session);
+        session.checkValidState();
 
         for (MemoryLayout layout : layouts) {
             Objects.requireNonNull(layout);
@@ -140,7 +140,7 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
 
     static MacOsAArch64VaList ofAddress(MemoryAddress addr, MemorySession session) {
         MemorySegment segment = MemorySegment.ofAddress(addr, Long.MAX_VALUE, session);
-        return new MacOsAArch64VaList(segment, session);
+        return new MacOsAArch64VaList(segment, (MemorySessionImpl)session);
     }
 
     static Builder builder(MemorySession session) {
@@ -149,12 +149,12 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
 
     @Override
     public MemorySessionImpl session() {
-        return (MemorySessionImpl)session;
+        return session;
     }
 
     @Override
     public VaList copy() {
-        MemorySessionImpl.checkValidState(session);
+        session.checkValidState();
         return new MacOsAArch64VaList(segment, session);
     }
 
@@ -165,12 +165,12 @@ public non-sealed class MacOsAArch64VaList implements VaList, Scoped {
 
     public static non-sealed class Builder implements VaList.Builder {
 
-        private final MemorySession session;
+        private final MemorySessionImpl session;
         private final List<SimpleVaArg> args = new ArrayList<>();
 
         public Builder(MemorySession session) {
-            MemorySessionImpl.checkValidState(session);
-            this.session = session;
+            ((MemorySessionImpl)session).checkValidState();
+            this.session = (MemorySessionImpl)session;
         }
 
         private Builder arg(Class<?> carrier, MemoryLayout layout, Object value) {
