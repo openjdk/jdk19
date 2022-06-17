@@ -702,7 +702,7 @@ public final class Utils {
             return true;
         }
         if (!name.contains(".Container")) {
-            // Matched @Name("jdk.jfr.Container*") or class name jdk.jfr.events.Container*
+            // Didn't match @Name("jdk.jfr.Container*") or class name "jdk.jfr.events.Container*"
             return true;
         }
         return JVM.getJVM().isContainerized();
