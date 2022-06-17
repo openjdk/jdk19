@@ -147,11 +147,8 @@ class AsyncExceptionHandshake : public AsyncHandshakeClosure {
   }
 
   ~AsyncExceptionHandshake() {
-    Thread* current = Thread::current();
-    if (current->is_Java_thread()) {
-      guarantee(JavaThread::cast(current)->is_oop_safe(),
-                "JavaThread cannot touch oops after its GC barrier is detached.");
-    }
+    guarantee(JavaThread::current()->is_oop_safe(),
+              "JavaThread cannot touch oops after its GC barrier is detached.");
     assert(!_exception.is_empty(), "invariant");
     _exception.release(Universe::vm_global());
   }
