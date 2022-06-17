@@ -310,7 +310,7 @@ class Direct$Type$Buffer$RW$$BO$
     public long address() {
         MemorySessionImpl session = session();
         if (session != null) {
-            if (session.ownerThread() == null && !session.baseSession().isCloseable()) {
+            if (session.ownerThread() == null && session.baseSession().isCloseable()) {
                 throw new UnsupportedOperationException("ByteBuffer derived from closeable shared sessions not supported");
             }
             session.checkValidState();
