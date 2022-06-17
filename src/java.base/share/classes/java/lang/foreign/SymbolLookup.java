@@ -160,7 +160,7 @@ public interface SymbolLookup {
                 ClassLoader.getSystemClassLoader();
         MemorySession loaderSession = (loader == null || loader instanceof BuiltinClassLoader) ?
                 MemorySession.global() : // builtin loaders never go away
-                MemorySessionImpl.createImplicit(loader);
+                MemorySessionImpl.heapSession(loader);
         return name -> {
             Objects.requireNonNull(name);
             JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();

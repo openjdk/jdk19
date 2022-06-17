@@ -760,7 +760,7 @@ public abstract sealed class Buffer
     @ForceInline
     final MemorySessionImpl session() {
         if (segment != null) {
-            return (MemorySessionImpl)segment.session();
+            return ((MemorySessionImpl)segment.session()).baseSession();
         } else {
             return null;
         }

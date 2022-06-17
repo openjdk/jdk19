@@ -617,7 +617,7 @@ final class VarHandleByteArrayAs$Type$s extends VarHandleByteArrayBase {
         static MemorySessionImpl session(ByteBuffer bb) {
             MemorySegment segment = NIO_ACCESS.bufferSegment(bb);
             return segment != null ?
-                    ((AbstractMemorySegmentImpl)segment).session() : null;
+                    ((AbstractMemorySegmentImpl)segment).session().baseSession() : null;
         }
 
         @ForceInline

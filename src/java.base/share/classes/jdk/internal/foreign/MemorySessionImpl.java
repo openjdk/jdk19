@@ -126,8 +126,8 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
         return new SharedSession(cleaner);
     }
 
-    public static MemorySessionImpl createImplicit(Object ref) {
-        return new ImplicitSession(ref);
+    public static MemorySessionImpl createImplicit() {
+        return new ImplicitSession();
     }
 
     @Override
@@ -295,6 +295,10 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
 
     public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
 
+    public static MemorySessionImpl heapSession(Object ref) {
+        return new GlobalSessionImpl(ref);
+    }
+
     /**
      * This is an implicit, GC-backed memory session. Implicit sessions cannot be closed explicitly.
      * While it would be possible to model an implicit session as a non-closeable view of a shared
@@ -305,11 +309,8 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      */
     static class ImplicitSession extends SharedSession {
 
-        final Object ref;
-
-        ImplicitSession(Object ref) {
+        public ImplicitSession() {
             super(CleanerFactory.cleaner());
-            this.ref = ref;
         }
 
         @Override
