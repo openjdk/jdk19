@@ -814,7 +814,7 @@ Node *LShiftINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       if (add1->in(1) == add1->in(2)) {
         // Convert "(x + x) << c0" into "x << (c0 + 1)"
         // In general, this optimization cannot be applied for c0 == 31 since
-        // 2x << 31 != x << 32 = x << 0 = x (e.g. x = 1: 2 < 31 = 0 != 1)
+        // 2x << 31 != x << 32 = x << 0 = x (e.g. x = 1: 2 << 31 = 0 != 1)
         return new LShiftINode(add1->in(1), phase->intcon(con + 1));
       }
 
