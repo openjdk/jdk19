@@ -654,19 +654,19 @@ public class Thread implements Runnable {
            long stackSize, AccessControlContext acc) {
 
         Thread parent = currentThread();
-        boolean attaching = (parent == this);   // primordial or JNI attach
+        boolean attached = (parent == this);   // primordial or JNI attached
 
-        if (attaching) {
+        if (attached) {
             if (g == null) {
                 throw new InternalError("group cannot be null when attaching");
             }
             this.holder = new FieldHolder(g, task, stackSize, NORM_PRIORITY, false);
         } else {
-            SecurityManager security = System.getSecurityManager();
+            SecurityManager sm = System.getSecurityManager();
             if (g == null) {
                 // the security manager can choose the thread group
-                if (security != null) {
-                    g = security.getThreadGroup();
+                if (sm != null) {
+                    g = sm.getThreadGroup();
                 }
 
                 // default to current thread's group
@@ -676,10 +676,10 @@ public class Thread implements Runnable {
             }
 
             // permission checks when creating a child Thread
-            if (security != null) {
-                security.checkAccess(g);
+            if (sm != null) {
+                sm.checkAccess(g);
                 if (isCCLOverridden(getClass())) {
-                    security.checkPermission(SecurityConstants.SUBCLASS_IMPLEMENTATION_PERMISSION);
+                    sm.checkPermission(SecurityConstants.SUBCLASS_IMPLEMENTATION_PERMISSION);
                 }
             }
 
@@ -687,15 +687,13 @@ public class Thread implements Runnable {
             this.holder = new FieldHolder(g, task, stackSize, priority, parent.isDaemon());
         }
 
-        // thread name and identifier
-        this.name = (name != null) ? name : genThreadName();
-        if (attaching && VM.initLevel() < 1) {
+        if (attached && VM.initLevel() < 1) {
             this.tid = 1;  // primordial thread
         } else {
             this.tid = ThreadIdentifiers.next();
         }
+        this.name = (name != null) ? name : genThreadName();
 
-        // ACC
         if (acc != null) {
             this.inheritedAccessControlContext = acc;
         } else {
@@ -703,7 +701,7 @@ public class Thread implements Runnable {
         }
 
         // thread locals
-        if (!attaching) {
+        if (!attached) {
             if ((characteristics & NO_THREAD_LOCALS) != 0) {
                 this.threadLocals = ThreadLocal.ThreadLocalMap.NOT_SUPPORTED;
                 this.inheritableThreadLocals = ThreadLocal.ThreadLocalMap.NOT_SUPPORTED;
