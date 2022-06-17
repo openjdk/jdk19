@@ -330,11 +330,11 @@ public final class AppImageFile {
         return null;
     }
 
-    static String getVersion() {
+    public static String getVersion() {
         return System.getProperty("java.version");
     }
 
-    static String getPlatform() {
+    public static String getPlatform() {
         return PLATFORM_LABELS.get(Platform.getPlatform());
     }
 

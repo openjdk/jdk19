@@ -301,32 +301,17 @@ public final class JPackageCommand extends CommandArguments<JPackageCommand> {
 
     public void createJPackageXMLFile(String mainLauncher, String mainClass)
             throws IOException {
-        String appImage = getArgumentValue("--app-image");
-        if (appImage == null) {
-            throw new RuntimeException("Error: --app-image expected");
-        }
-
-        final String version = System.getProperty("java.version");
-        final String platform;
-
-        if (TKit.isWindows()) {
-            platform = "windows";
-        } else if (TKit.isLinux()) {
-            platform = "linux";
-        } else if (TKit.isOSX()) {
-            platform = "macOS";
-        } else {
-            platform = "unknown";
-        }
-
-        ApplicationLayout layout = ApplicationLayout.platformAppImage();
-        Path jpackageXMLFile = layout.resolveAt(Path.of(appImage))
-                .appDirectory().resolve(".jpackage.xml");
+        Path jpackageXMLFile = AppImageFile.getPathInAppImage(
+                Optional.ofNullable(getArgumentValue("--app-image")).map(
+                        Path::of).orElseThrow(() -> {
+                            return new RuntimeException(
+                                    "Error: --app-image expected");
+                        }));
 
         IOUtils.createXml(jpackageXMLFile, xml -> {
                 xml.writeStartElement("jpackage-state");
-                xml.writeAttribute("version", version);
-                xml.writeAttribute("platform", platform);
+                xml.writeAttribute("version", AppImageFile.getVersion());
+                xml.writeAttribute("platform", AppImageFile.getPlatform());
 
                 xml.writeStartElement("app-version");
                 xml.writeCharacters("1.0");
