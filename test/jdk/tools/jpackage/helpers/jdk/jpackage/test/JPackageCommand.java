@@ -45,6 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import jdk.jpackage.internal.IOUtils;
 import jdk.jpackage.internal.AppImageFile;
 import jdk.jpackage.internal.ApplicationLayout;
 import jdk.jpackage.internal.PackageFile;
@@ -322,7 +323,7 @@ public final class JPackageCommand extends CommandArguments<JPackageCommand> {
         Path jpackageXMLFile = layout.resolveAt(Path.of(appImage))
                 .appDirectory().resolve(".jpackage.xml");
 
-        TKit.createXml(jpackageXMLFile, xml -> {
+        IOUtils.createXml(jpackageXMLFile, xml -> {
                 xml.writeStartElement("jpackage-state");
                 xml.writeAttribute("version", version);
                 xml.writeAttribute("platform", platform);
