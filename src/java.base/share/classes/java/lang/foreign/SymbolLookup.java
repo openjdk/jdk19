@@ -28,6 +28,7 @@ package java.lang.foreign;
 import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.foreign.MemorySessionImpl;
+import jdk.internal.foreign.NativeMemorySegmentImpl;
 import jdk.internal.javac.PreviewFeature;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.NativeLibrary;
@@ -138,10 +139,12 @@ public interface SymbolLookup {
      * this method returned.
      * <p>
      * Libraries associated with a class loader are unloaded when the class loader becomes
-     * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. The symbol lookup
-     * returned by this method is backed by a {@linkplain MemorySession#asNonCloseable() non-closeable}, shared memory
-     * session which keeps the caller's class loader reachable. Therefore, libraries associated with the caller's class
-     * loader are kept loaded (and their symbols available) as long as a loader lookup for that class loader is reachable.
+     * <a href="../../../java/lang/ref/package.html#reachability">unreachable</a>. The returned loader lookup
+     * keeps the caller's class loader reachable. Therefore, libraries associated with the caller's class
+     * loader are kept loaded (and their symbols available) as long as a loader lookup for that class loader
+     * (or any of the symbols originated from it) is reachable.
+     * <p>
+     * The symbols obtained from the returned loader lookup are backed by the {@linkplain MemorySession#global() global session}.
      * <p>
      * In cases where this method is called from a context where there is no caller frame on the stack
      * (e.g. when called directly from a JNI attached thread), the caller's class loader defaults to the
@@ -158,9 +161,7 @@ public interface SymbolLookup {
         ClassLoader loader = caller != null ?
                 caller.getClassLoader() :
                 ClassLoader.getSystemClassLoader();
-        MemorySession loaderSession = (loader == null || loader instanceof BuiltinClassLoader) ?
-                MemorySession.global() : // builtin loaders never go away
-                MemorySessionImpl.heapSession(loader);
+        MemorySession loaderSession = MemorySession.global();
         return name -> {
             Objects.requireNonNull(name);
             JavaLangAccess javaLangAccess = SharedSecrets.getJavaLangAccess();
@@ -168,7 +169,7 @@ public interface SymbolLookup {
             MemoryAddress addr = MemoryAddress.ofLong(javaLangAccess.findNative(loader, name));
             return addr == MemoryAddress.NULL ?
                     Optional.empty() :
-                    Optional.of(MemorySegment.ofAddress(addr, 0L, loaderSession));
+                    Optional.of(NativeMemorySegmentImpl.makeNativeSegmentUnchecked(addr, 0L, loader, loaderSession));
         };
     }
 

@@ -42,20 +42,20 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean readOnly, MemorySessionImpl session) {
-        super(min, length, readOnly, session);
+    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean readOnly, Object ref, MemorySessionImpl session) {
+        super(min, length, readOnly, ref, session);
         this.unmapper = unmapper;
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
-        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, null,
+        return nioAccess.newMappedByteBuffer(unmapper, min, (int)length, ref,
                 session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
     @Override
     MappedMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
-        return new MappedMemorySegmentImpl(min + offset, unmapper, size, readOnly, session);
+        return new MappedMemorySegmentImpl(min + offset, unmapper, size, readOnly, ref, session);
     }
 
     // mapped segment methods
@@ -95,7 +95,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     public static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {
 
         public EmptyMappedMemorySegmentImpl(boolean readOnly, MemorySessionImpl session) {
-            super(0, null, 0, readOnly, session);
+            super(0, null, 0, readOnly, null, session);
         }
 
         @Override

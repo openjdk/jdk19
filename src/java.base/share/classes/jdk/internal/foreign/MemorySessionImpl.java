@@ -256,14 +256,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      * Adding new resources to the global session, does nothing: as the session can never become not-alive, there is nothing to track.
      * Acquiring and or releasing a memory session similarly does nothing.
      */
-    static class GlobalSessionImpl extends MemorySessionImpl {
-
-        final Object ref;
-
-        public GlobalSessionImpl(Object ref) {
-            super(null, null ,null);
-            this.ref = ref;
-        }
+    public static final MemorySessionImpl GLOBAL = new MemorySessionImpl(null, null, null) {
 
         @Override
         @ForceInline
@@ -291,13 +284,7 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
         public void justClose() {
             throw nonCloseable();
         }
-    }
-
-    public static final MemorySessionImpl GLOBAL = new GlobalSessionImpl(null);
-
-    public static MemorySessionImpl heapSession(Object ref) {
-        return new GlobalSessionImpl(ref);
-    }
+    };
 
     /**
      * This is an implicit, GC-backed memory session. Implicit sessions cannot be closed explicitly.

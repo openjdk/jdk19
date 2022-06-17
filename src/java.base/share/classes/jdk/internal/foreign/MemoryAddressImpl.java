@@ -87,11 +87,11 @@ public final class MemoryAddressImpl implements MemoryAddress, Scoped {
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize, MemorySession session) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, session);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, session);
     }
 
     public static MemorySegment ofLongUnchecked(long value, long byteSize) {
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, MemorySessionImpl.GLOBAL);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(MemoryAddress.ofLong(value), byteSize, null, MemorySessionImpl.GLOBAL);
     }
 
     @Override

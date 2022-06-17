@@ -527,7 +527,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
         if (bufferSegment != null) {
             bufferSession = bufferSegment.session;
         } else {
-            bufferSession = MemorySessionImpl.heapSession(bb);
+            bufferSession = MemorySessionImpl.GLOBAL;
         }
         boolean readOnly = bb.isReadOnly();
         int scaleFactor = getScaleFactor(bb);
@@ -550,10 +550,10 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                 throw new AssertionError("Cannot get here");
             }
         } else if (unmapper == null) {
-            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bufferSession);
+            return new NativeMemorySegmentImpl(bbAddress + (pos << scaleFactor), size << scaleFactor, readOnly, bb, bufferSession);
         } else {
             // we can ignore scale factor here, a mapped buffer is always a byte buffer, so scaleFactor == 0.
-            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bufferSession);
+            return new MappedMemorySegmentImpl(bbAddress + pos, unmapper, size, readOnly, bb, bufferSession);
         }
     }
 

@@ -886,7 +886,7 @@ public sealed interface MemorySegment extends Addressable permits AbstractMemory
         if (bytesSize < 0) {
             throw new IllegalArgumentException("Invalid size : " + bytesSize);
         }
-        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, session);
+        return NativeMemorySegmentImpl.makeNativeSegmentUnchecked(address, bytesSize, null, session);
     }
 
     /**

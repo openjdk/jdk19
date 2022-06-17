@@ -41,7 +41,7 @@ import sun.security.action.GetBooleanAction;
  */
 public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
-    public static final MemorySegment EVERYTHING = new NativeMemorySegmentImpl(0, Long.MAX_VALUE, false, MemorySessionImpl.GLOBAL) {
+    public static final MemorySegment EVERYTHING = new NativeMemorySegmentImpl(0, Long.MAX_VALUE, false, null, MemorySessionImpl.GLOBAL) {
         @Override
         void checkBounds(long offset, long length) {
             // do nothing
@@ -62,11 +62,13 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     private static final boolean skipZeroMemory = GetBooleanAction.privilegedGetProperty("jdk.internal.foreign.skipZeroMemory");
 
     final long min;
+    final Object ref;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySessionImpl session) {
+    NativeMemorySegmentImpl(long min, long length, boolean readOnly, Object ref, MemorySessionImpl session) {
         super(length, readOnly, session);
         this.min = min;
+        this.ref = ref;
     }
 
     @ForceInline
@@ -78,12 +80,12 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
     @Override
     NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
-        return new NativeMemorySegmentImpl(min + offset, size, readOnly, session);
+        return new NativeMemorySegmentImpl(min + offset, size, readOnly, ref, session);
     }
 
     @Override
     ByteBuffer makeByteBuffer() {
-        return nioAccess.newDirectByteBuffer(min, (int) this.length, null,
+        return nioAccess.newDirectByteBuffer(min, (int) this.length, ref,
                 session == MemorySessionImpl.GLOBAL ? null : this);
     }
 
@@ -127,7 +129,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
         long alignedBuf = Utils.alignUp(buf, alignmentBytes);
         AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(buf, alignedSize,
-                false, sessionImpl);
+                false, null, sessionImpl);
         sessionImpl.addOrCleanupIfFail(new MemorySessionImpl.ResourceList.ResourceCleanup() {
             @Override
             public void cleanup() {
@@ -142,10 +144,10 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         return segment;
     }
 
-    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, MemorySession session) {
+    public static MemorySegment makeNativeSegmentUnchecked(MemoryAddress min, long bytesSize, Object ref, MemorySession session) {
         MemorySessionImpl sessionImpl = (MemorySessionImpl)session;
         sessionImpl.checkValidState();
-        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, false, sessionImpl);
+        AbstractMemorySegmentImpl segment = new NativeMemorySegmentImpl(min.toRawLongValue(), bytesSize, false, ref, sessionImpl);
         return segment;
     }
 }
