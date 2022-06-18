@@ -644,6 +644,13 @@ void VM_BaseGetOrSetLocal::doit() {
     return;
   }
   if (_set) {
+    if (fr.is_heap_frame()) { // we want this check after the check for JVMTI_ERROR_INVALID_SLOT
+      assert(_depth == 0 && Continuation::is_frame_in_continuation(_jvf->thread(), fr), "sanity check");
+      // the safepoint could be as we return to the return barrier but before we execute it (poll return)
+      _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals currently unsupported in continuations
+      return;
+    }
+
     // Force deoptimization of frame if compiled because it's
     // possible the compiler emitted some locals as constant values,
     // meaning they are not mutable.
