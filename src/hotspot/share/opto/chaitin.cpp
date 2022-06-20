@@ -1737,7 +1737,7 @@ void PhaseChaitin::fixup_spills() {
             // multiple inputs. In some rare cases there are even multiple memory
             // operands, before and after spilling.
             // (e.g. spilling "addFPR24_reg_mem" to "addFPR24_mem_cisc")
-            // In eigher case, there is no space in the inputs for the memory edge
+            // In either case, there is no space in the inputs for the memory edge
             // so we add an additional precedence / memory edge.
             cisc->add_prec(src);
           }
