@@ -21,23 +21,15 @@
  * questions.
  */
 
-/**
- * @test
- * @bug 8287982
- * @summary Test native threads attaching implicitly the VM by means of an upcall
- * @requires (os.family == "linux" | os.family == "mac") & (sun.arch.data.model == "64")
- * @enablePreview
- * @run main/othervm --enable-native-access=ALL-UNNAMED ImplicitAttach 1
- * @run main/othervm --enable-native-access=ALL-UNNAMED ImplicitAttach 2
- * @run main/othervm --enable-native-access=ALL-UNNAMED ImplicitAttach 4
- */
-
 import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * Test native threads attaching implicitly to the VM by means of an upcall.
+ */
 public class ImplicitAttach {
     private static final ValueLayout.OfInt C_INT = ValueLayout.JAVA_INT.withBitAlignment(32);
     private static final ValueLayout.OfAddress C_POINTER = ValueLayout.ADDRESS.withBitAlignment(64);

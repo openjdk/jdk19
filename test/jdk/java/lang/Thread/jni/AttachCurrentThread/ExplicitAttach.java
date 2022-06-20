@@ -21,18 +21,11 @@
  * questions.
  */
 
-/**
- * @test
- * @bug 8287982
- * @summary Test native threads attaching to the VM with JNI AttachCurrentThread
- * @requires (os.family == "linux" | os.family == "mac")
- * @run main/othervm ExplicitAttach 1
- * @run main/othervm ExplicitAttach 2
- * @run main/othervm ExplicitAttach 4
- */
-
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * Test native threads attaching to the VM with JNI AttachCurrentThread.
+ */
 public class ExplicitAttach {
     private static volatile CountDownLatch latch;
 
