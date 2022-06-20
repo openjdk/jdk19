@@ -86,7 +86,7 @@ else
   BUILD_JDK_JTREG_LIBRARIES_LDFLAGS_libLinkerInvokerUnnamed := $(LIBCXX) -pthread
   BUILD_JDK_JTREG_LIBRARIES_LDFLAGS_libLinkerInvokerModule := $(LIBCXX) -pthread
   BUILD_JDK_JTREG_LIBRARIES_LDFLAGS_libLoaderLookupInvoker := $(LIBCXX) -pthread
-  BUILD_JDK_JTREG_LIBRARIES_LDFLAGS_libExplicitAttach := -pthread -ljvm
+  BUILD_JDK_JTREG_LIBRARIES_LDFLAGS_libExplicitAttach := -ljvm -pthread
   BUILD_JDK_JTREG_LIBRARIES_LDFLAGS_libImplicitAttach := -pthread
   BUILD_JDK_JTREG_EXCLUDE += exerevokeall.c
   ifeq ($(call isTargetOs, linux), true)
