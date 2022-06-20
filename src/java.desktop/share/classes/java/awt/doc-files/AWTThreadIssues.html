@@ -118,11 +118,7 @@ The implementation-specific details are given below.
 Implementation-dependent behavior.
 </h3>
 
-Prior to 1.4, the helper threads were never terminated.
-<p>
-Starting with 1.4, the behavior has changed as a result of the fix for
-<a href="https://bugs.openjdk.org/browse/JDK-4030718">
-4030718</a>. With the current implementation, AWT terminates all its
+AWT terminates all its
 helper threads allowing the application to exit cleanly when the
 following three conditions are true:
 <ul>
