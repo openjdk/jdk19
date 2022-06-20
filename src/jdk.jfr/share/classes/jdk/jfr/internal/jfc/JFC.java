@@ -301,7 +301,7 @@ public final class JFC {
         }
         return message;
     }
-    
+
     private static String exceptionToVerb(Exception e) {
         if (e instanceof FileNotFoundException || e instanceof NoSuchFileException) {
             return "find";

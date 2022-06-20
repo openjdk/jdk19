@@ -230,7 +230,7 @@ final class DCmdStart extends AbstractDCmd {
                 s.putAll(JFC.createKnown(configName).getSettings());
             } catch (InvalidPathException | IOException | ParseException e) {
                 throw new DCmdException(JFC.formatException("Could not", e, configName), e);
-            } 
+            }
         }
         return s;
     }
