@@ -324,6 +324,8 @@ SignatureStream::~SignatureStream() {
   }
 }
 
+PRAGMA_DIAG_PUSH
+PRAGMA_STRINGOP_OVERREAD_IGNORED
 inline int SignatureStream::scan_type(BasicType type) {
   const u1* base = _signature->bytes();
   int end = _end;
@@ -351,6 +353,7 @@ inline int SignatureStream::scan_type(BasicType type) {
     return end + 1;
   }
 }
+PRAGMA_DIAG_POP
 
 void SignatureStream::next() {
   const Symbol* sig = _signature;

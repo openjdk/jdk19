@@ -44,12 +44,6 @@
 
 #define PRAGMA_FORMAT_IGNORED PRAGMA_DISABLE_GCC_WARNING("-Wformat")
 
-// Disable -Wstringop-truncation which is introduced in GCC 8.
-// https://gcc.gnu.org/gcc-8/changes.html
-#if !defined(__clang_major__) && (__GNUC__ >= 8)
-#define PRAGMA_STRINGOP_TRUNCATION_IGNORED PRAGMA_DISABLE_GCC_WARNING("-Wstringop-truncation")
-#endif
-
 // Disable -Wstringop-overflow which is introduced in GCC 7.
 // https://gcc.gnu.org/gcc-7/changes.html
 #if !defined(__clang_major__) && (__GNUC__ >= 7)
@@ -58,6 +52,18 @@
 
 #define PRAGMA_NONNULL_IGNORED \
   PRAGMA_DISABLE_GCC_WARNING("-Wnonnull")
+
+// Disable -Wstringop-truncation which is introduced in GCC 8.
+// https://gcc.gnu.org/gcc-8/changes.html
+#if !defined(__clang_major__) && (__GNUC__ >= 8)
+#define PRAGMA_STRINGOP_TRUNCATION_IGNORED PRAGMA_DISABLE_GCC_WARNING("-Wstringop-truncation")
+#endif
+
+// Disable -Wstringop-overread which is introduced in GCC 11.
+// https://gcc.gnu.org/gcc-11/changes.html
+#if !defined(__clang_major__) && (__GNUC__ >= 11)
+#define PRAGMA_STRINGOP_OVERREAD_IGNORED PRAGMA_DISABLE_GCC_WARNING("-Wstringop-overread")
+#endif
 
 #if defined(__clang_major__) && \
       (__clang_major__ >= 4 || \
