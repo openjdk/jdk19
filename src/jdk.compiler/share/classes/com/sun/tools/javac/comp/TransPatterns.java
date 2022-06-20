@@ -347,9 +347,6 @@ public class TransPatterns extends TreeTranslator {
 
     private MethodSymbol getAccessor(DiagnosticPosition pos, RecordComponent component) {
         return component2Proxy.computeIfAbsent(component, c -> {
-            MethodSymbol realAccessor =
-                    rs.resolveInternalMethod(pos, env, component.owner.type,
-                                             component.name, List.nil(), List.nil());
             MethodType type = new MethodType(List.of(component.owner.erasure(types)),
                                              types.erasure(component.type),
                                              List.nil(),
@@ -359,7 +356,7 @@ public class TransPatterns extends TreeTranslator {
                                                   type,
                                                   currentClass);
             JCStatement accessorStatement =
-                    make.Return(make.App(make.Select(make.Ident(proxy.params().head), realAccessor)));
+                    make.Return(make.App(make.Select(make.Ident(proxy.params().head), c.accessor)));
             VarSymbol ctch = new VarSymbol(Flags.SYNTHETIC,
                     names.fromString("catch" + currentClassTree.pos + target.syntheticNameChar()),
                     syms.throwableType,
