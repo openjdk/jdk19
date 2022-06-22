@@ -25,8 +25,6 @@
  * @test
  * @bug 8288445
  * @summary Test shift by 0
- * @library /test/lib
- * @run main compiler.codegen.ShiftByZero
  * @run main/othervm -Xbatch -XX:-TieredCompilation
  * compiler.codegen.ShiftByZero
  */
