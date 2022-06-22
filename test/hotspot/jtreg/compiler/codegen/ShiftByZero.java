@@ -66,7 +66,7 @@ public class ShiftByZero {
     }
 
     public static void main(String[] strArr) {
-        for (int i = 0; i < 20_000; i++ ) {
+        for (int i = 0; i < 20_000; i++) {
             bMeth();
         }
     }
