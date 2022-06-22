@@ -504,6 +504,12 @@ void JfrThreadSampler::run() {
     const int64_t java_period_millis = _java_period_millis == 0 ? max_jlong : MAX2<int64_t>(_java_period_millis, 1);
     const int64_t native_period_millis = _native_period_millis == 0 ? max_jlong : MAX2<int64_t>(_native_period_millis, 1);
 
+    // If both period fields are 0, it implies the sampler is in the process
+    // of disenrolling. Loop back for graceful disenroll by means of the semaphore.
+    if (java_period_millis == max_jlong && native_period_millis == max_jlong) {
+      continue;
+    }
+
     const int64_t now_ms = get_monotonic_ms();
 
     /*
@@ -521,7 +527,7 @@ void JfrThreadSampler::run() {
     const int64_t sleep_to_next = MIN2<int64_t>(next_j, next_n);
 
     if (sleep_to_next > 0) {
-      os::naked_short_sleep(sleep_to_next);
+      os::naked_sleep(sleep_to_next);
     }
 
     if ((next_j - sleep_to_next) <= 0) {
