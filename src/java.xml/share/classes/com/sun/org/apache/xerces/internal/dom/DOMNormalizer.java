@@ -882,7 +882,7 @@ public class DOMNormalizer implements XMLDocumentHandler {
         if (attributes != null) {
 
             // clone content of the attributes
-            List<Node> attrList = attributes.cloneMap(new ArrayList<>(5));
+            List<Node> attrList = attributes.cloneMap(new ArrayList<>());
             for (int i = 0; i < attrList.size(); i++) {
                 Attr attr = (Attr) attrList.get(i);
                 fLocator.fRelatedNode = attr;
