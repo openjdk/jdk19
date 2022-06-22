@@ -508,8 +508,8 @@ void JfrThreadSampler::run() {
     int64_t native_period_millis = get_native_period();
     native_period_millis = native_period_millis == 0 ? max_jlong : MAX2<int64_t>(native_period_millis, 1);
 
-    // If both period fields are 0, it implies the sampler is in the process
-    // of disenrolling. Loop back for graceful disenroll by means of the semaphore.
+    // If both periods are max_jlong, it implies the sampler is in the process of
+    // disenrolling. Loop back for graceful disenroll by means of the semaphore.
     if (java_period_millis == max_jlong && native_period_millis == max_jlong) {
       continue;
     }
