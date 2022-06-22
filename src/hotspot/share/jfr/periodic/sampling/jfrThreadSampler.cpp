@@ -35,6 +35,7 @@
 #include "jfr/utilities/jfrTime.hpp"
 #include "jfrfiles/jfrEventClasses.hpp"
 #include "logging/log.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/semaphore.hpp"
@@ -353,8 +354,8 @@ class JfrThreadSampler : public NonJavaThread {
   void run();
   static Monitor* transition_block() { return JfrThreadSampler_lock; }
   static void on_javathread_suspend(JavaThread* thread);
-  int64_t get_java_period() const { return _java_period_millis; };
-  int64_t get_native_period() const { return _native_period_millis; };
+  int64_t get_java_period() const { return Atomic::load(&_java_period_millis); };
+  int64_t get_native_period() const { return Atomic::load(&_native_period_millis); };
 };
 
 static void clear_transition_block(JavaThread* jt) {
@@ -417,12 +418,12 @@ JfrThreadSampler::~JfrThreadSampler() {
 
 void JfrThreadSampler::set_java_period(int64_t period_millis) {
   assert(period_millis >= 0, "invariant");
-  _java_period_millis = period_millis;
+  Atomic::store(&_java_period_millis, period_millis);
 }
 
 void JfrThreadSampler::set_native_period(int64_t period_millis) {
   assert(period_millis >= 0, "invariant");
-  _native_period_millis = period_millis;
+  Atomic::store(&_native_period_millis, period_millis);
 }
 
 static inline bool is_released(JavaThread* jt) {
@@ -501,8 +502,11 @@ void JfrThreadSampler::run() {
       last_native_ms = last_java_ms;
     }
     _sample.signal();
-    const int64_t java_period_millis = _java_period_millis == 0 ? max_jlong : MAX2<int64_t>(_java_period_millis, 1);
-    const int64_t native_period_millis = _native_period_millis == 0 ? max_jlong : MAX2<int64_t>(_native_period_millis, 1);
+
+    int64_t java_period_millis = get_java_period();
+    java_period_millis = java_period_millis == 0 ? max_jlong : MAX2<int64_t>(java_period_millis, 1);
+    int64_t native_period_millis = get_native_period();
+    native_period_millis = native_period_millis == 0 ? max_jlong : MAX2<int64_t>(native_period_millis, 1);
 
     // If both period fields are 0, it implies the sampler is in the process
     // of disenrolling. Loop back for graceful disenroll by means of the semaphore.
