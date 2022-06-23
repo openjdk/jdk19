@@ -794,6 +794,9 @@ void JavaThread::set_threadOopHandles(oop p) {
 }
 
 oop JavaThread::threadObj() const {
+  Thread* current = Thread::current();
+  guarantee(current != this || JavaThread::cast(current)->is_oop_safe(),
+            "current cannot touch oops after its GC barrier is detached.");
   return _threadObj.resolve();
 }
 
@@ -2144,9 +2147,11 @@ void JavaThread::print_name_on_error(outputStream* st, char *buf, int buflen) co
 // JavaThread::print() is that we can't grab lock or allocate memory.
 void JavaThread::print_on_error(outputStream* st, char *buf, int buflen) const {
   st->print("%s \"%s\"", type_name(), get_thread_name_string(buf, buflen));
-  oop thread_obj = threadObj();
-  if (thread_obj != NULL) {
-    if (java_lang_Thread::is_daemon(thread_obj)) st->print(" daemon");
+  if (is_oop_safe()) {
+    oop thread_obj = threadObj();
+    if (thread_obj != NULL) {
+      if (java_lang_Thread::is_daemon(thread_obj)) st->print(" daemon");
+    }
   }
   st->print(" [");
   st->print("%s", _get_thread_state_name(_thread_state));
@@ -2205,22 +2210,26 @@ const char* JavaThread::name() const  {
 // descriptive string if there is no set name.
 const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   const char* name_str;
-  oop thread_obj = threadObj();
-  if (thread_obj != NULL) {
-    oop name = java_lang_Thread::name(thread_obj);
-    if (name != NULL) {
-      if (buf == NULL) {
-        name_str = java_lang_String::as_utf8_string(name);
+  if (is_oop_safe()) {
+    oop thread_obj = threadObj();
+    if (thread_obj != NULL) {
+      oop name = java_lang_Thread::name(thread_obj);
+      if (name != NULL) {
+        if (buf == NULL) {
+          name_str = java_lang_String::as_utf8_string(name);
+        } else {
+          name_str = java_lang_String::as_utf8_string(name, buf, buflen);
+        }
+      } else if (is_attaching_via_jni()) { // workaround for 6412693 - see 6404306
+        name_str = "<no-name - thread is attaching>";
       } else {
-        name_str = java_lang_String::as_utf8_string(name, buf, buflen);
+        name_str = "<un-named>";
       }
-    } else if (is_attaching_via_jni()) { // workaround for 6412693 - see 6404306
-      name_str = "<no-name - thread is attaching>";
     } else {
-      name_str = "<un-named>";
+      name_str = Thread::name();
     }
   } else {
-    name_str = Thread::name();
+    name_str = "<no-name - thread has exited>";
   }
   assert(name_str != NULL, "unexpected NULL thread name");
   return name_str;
