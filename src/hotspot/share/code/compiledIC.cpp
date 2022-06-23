@@ -586,9 +586,6 @@ bool CompiledStaticCall::set_to_clean(bool in_use) {
   // Reset call site
   set_destination_mt_safe(resolve_call_stub());
 
-  // Do not reset stub here:  It is too expensive to call find_stub.
-  // Instead, rely on caller (nmethod::clear_inline_caches) to clear
-  // both the call and its stub.
   return true;
 }
 
