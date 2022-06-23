@@ -651,7 +651,6 @@ void VM_BaseGetOrSetLocal::doit() {
       // but the caller frame has not been thawed. We can't support a JVMTI SetLocal in the callee
       // frame at this point, because we aren't truly in the callee yet.
       // fr.is_heap_frame() is impossible if a continuation is at a single step or breakpoint.
-      // In such cases the top frames can't be frozen because of an agent callback frame.
       _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals are not fully supported in continuations
       return;
     }
