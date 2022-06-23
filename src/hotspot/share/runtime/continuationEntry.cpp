@@ -34,10 +34,12 @@
 
 int ContinuationEntry::_return_pc_offset = 0;
 address ContinuationEntry::_return_pc = nullptr;
+CompiledMethod* ContinuationEntry::_enter_special = nullptr;
 
 void ContinuationEntry::set_enter_code(CompiledMethod* cm) {
   assert(_return_pc_offset != 0, "");
   _return_pc = cm->code_begin() + _return_pc_offset;
+  _enter_special = cm;
 }
 
 ContinuationEntry* ContinuationEntry::from_frame(const frame& f) {

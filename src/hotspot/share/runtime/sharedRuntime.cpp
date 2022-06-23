@@ -1560,10 +1560,28 @@ JRT_END
 // resolve a static call and patch code
 JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_static_call_C(JavaThread* current ))
   methodHandle callee_method;
+  bool enter_special = false;
   JRT_BLOCK
     callee_method = SharedRuntime::resolve_helper(false, false, CHECK_NULL);
     current->set_vm_result_2(callee_method());
+
+    if (current->is_interp_only_mode()) {
+      RegisterMap reg_map(current, false);
+      frame stub_frame = current->last_frame();
+      assert(stub_frame.is_runtime_frame(), "must be a runtimeStub");
+      frame caller = stub_frame.sender(&reg_map);
+      enter_special = caller.cb() != NULL && caller.cb()->is_compiled()
+        && caller.cb()->as_compiled_method()->method()->is_continuation_enter_intrinsic();
+    }
   JRT_BLOCK_END
+
+  if (current->is_interp_only_mode() && enter_special) {
+    // enterSpecial is compiled and calls this method to resolve the call to Continuation::enter
+    // but in interp_only_mode we need to go to the interpreted entry
+    // The c2i won't patch in this mode -- see fixup_callers_callsite
+    return callee_method->get_c2i_entry();
+  }
+
   // return compiled code entry point after potential safepoints
   assert(callee_method->verified_code_entry() != NULL, " Jump to zero!");
   return callee_method->verified_code_entry();
@@ -1990,6 +2008,14 @@ JRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address cal
   // The check above makes sure this is a nmethod.
   CompiledMethod* nm = cb->as_compiled_method_or_null();
   assert(nm, "must be");
+
+  // Don't patch Continuation.enterSpecial if in interp_only mode.
+  // It's possible that another thread that isn't interp_only will patch enterSpecial,
+  // but we'll worry about that another time.
+  if (nm->method()->is_continuation_enter_intrinsic()) {
+    if (JavaThread::current()->is_interp_only_mode())
+      return;
+  }
 
   // Get the return PC for the passed caller PC.
   address return_pc = caller_pc + frame::pc_return_offset;

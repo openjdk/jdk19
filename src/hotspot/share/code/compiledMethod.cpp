@@ -453,6 +453,19 @@ void CompiledMethod::clear_ic_callsites() {
   }
 }
 
+void CompiledMethod::clear_continuation_enter_special_inline_caches() {
+  assert (method()->is_continuation_enter_intrinsic(), "not Continuation.enterSpecial");
+
+  ResourceMark rm;
+  CompiledICLocker ml(this);
+  RelocIterator iter(this);
+  while(iter.next()) {
+    if (iter.type() == relocInfo::static_call_type) {
+      iter.reloc()->clear_inline_cache();
+    }
+  }
+}
+
 #ifdef ASSERT
 // Check class_loader is alive for this bit of metadata.
 class CheckClass : public MetadataClosure {

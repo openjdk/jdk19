@@ -52,7 +52,8 @@ public:
 
 public:
   static int _return_pc_offset; // friend gen_continuation_enter
-  static void set_enter_code(CompiledMethod* nm); // friend SharedRuntime::generate_native_wrapper
+  static CompiledMethod* _enter_special;
+  static void set_enter_code(CompiledMethod* cm); // friend SharedRuntime::generate_native_wrapper
 
 private:
   static address _return_pc;
@@ -88,6 +89,8 @@ public:
   static address entry_pc() { return _return_pc; }
   intptr_t* entry_sp() const { return (intptr_t*)this; }
   intptr_t* entry_fp() const;
+
+  static CompiledMethod* enter_special() { return _enter_special; }
 
   int argsize() const { return _argsize; }
   void set_argsize(int value) { _argsize = value; }

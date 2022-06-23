@@ -311,6 +311,9 @@ void Continuation::set_cont_fastpath_thread_state(JavaThread* thread) {
   assert(thread != nullptr, "");
   bool fast = !thread->is_interp_only_mode();
   thread->set_cont_fastpath_thread_state(fast);
+  if (thread->is_interp_only_mode() && ContinuationEntry::enter_special() != nullptr) {
+    ContinuationEntry::enter_special()->clear_continuation_enter_special_inline_caches();
+  }
 }
 
 void Continuation::notify_deopt(JavaThread* thread, intptr_t* sp) {
