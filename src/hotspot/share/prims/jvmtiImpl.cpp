@@ -611,7 +611,7 @@ void VM_BaseGetOrSetLocal::doit() {
 
   frame fr = _jvf->fr();
   if (_set && _depth != 0 && Continuation::is_frame_in_continuation(_jvf->thread(), fr)) {
-    _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals currently unsupported in continuations
+    _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals are not fully supported in continuations
     return;
   }
 
@@ -646,8 +646,13 @@ void VM_BaseGetOrSetLocal::doit() {
   if (_set) {
     if (fr.is_heap_frame()) { // we want this check after the check for JVMTI_ERROR_INVALID_SLOT
       assert(Continuation::is_frame_in_continuation(_jvf->thread(), fr), "sanity check");
-      // the safepoint could be as we return to the return barrier but before we execute it (poll return)
-      _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals currently unsupported in continuations
+      // If the topmost frame is a heap frame, then it hasn't been thawed. This can happen
+      // if we are executing at a return barrier safepoint. The callee frame has been popped,
+      // but the caller frame has not been thawed. We can't support a JVMTI SetLocal in the callee
+      // frame at this point, because we aren't truly in the callee yet.
+      // fr.is_heap_frame() is impossible if a continuation is at a single step or breakpoint.
+      // In such cases the top frames can't be frozen because of an agent callback frame.
+      _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals are not fully supported in continuations
       return;
     }
 
