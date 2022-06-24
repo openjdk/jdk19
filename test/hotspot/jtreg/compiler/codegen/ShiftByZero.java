@@ -40,7 +40,7 @@ public class ShiftByZero {
     public static void bMeth() {
         int shift = i32[0];
         // This loop is to confuse the optimizer, so that "shift" is
-        // optimized to 0 only after loop vectorization. 
+        // optimized to 0 only after loop vectorization.
         for (int i8 = 279; i8 > 1; --i8) {
             shift <<= 6;
         }
