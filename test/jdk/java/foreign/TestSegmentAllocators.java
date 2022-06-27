@@ -140,6 +140,26 @@ public class TestSegmentAllocators {
         SegmentAllocator.newNativeArena( -1, MemorySession.global());
     }
 
+    @Test(dataProvider = "allocators", expectedExceptions = IllegalArgumentException.class)
+    public void testBadAllocationSize(SegmentAllocator allocator) {
+        allocator.allocate(-1);
+    }
+
+    @Test(dataProvider = "allocators", expectedExceptions = IllegalArgumentException.class)
+    public void testBadAllocationAlignZero(SegmentAllocator allocator) {
+        allocator.allocate(1, 0);
+    }
+
+    @Test(dataProvider = "allocators", expectedExceptions = IllegalArgumentException.class)
+    public void testBadAllocationAlignNeg(SegmentAllocator allocator) {
+        allocator.allocate(1, -1);
+    }
+
+    @Test(dataProvider = "allocators", expectedExceptions = IllegalArgumentException.class)
+    public void testBadAllocationAlignNotPowerTwo(SegmentAllocator allocator) {
+        allocator.allocate(1, 3);
+    }
+
     @Test
     public void testArrayAllocateDelegation() {
         AtomicInteger calls = new AtomicInteger();
@@ -164,6 +184,7 @@ public class TestSegmentAllocators {
         allocator.allocateArray(ValueLayout.JAVA_DOUBLE);
         assertEquals(calls.get(), 7);
     }
+
 
     @Test(dataProvider = "arrayAllocations")
     public <Z> void testArray(AllocationFactory allocationFactory, ValueLayout layout, AllocationFunction<Object, ValueLayout> allocationFunction, ToArrayHelper<Z> arrayHelper) {
