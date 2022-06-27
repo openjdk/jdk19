@@ -43,6 +43,7 @@ import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -137,6 +138,31 @@ public class TestSegmentAllocators {
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBadUnboundedArenaSize() {
         SegmentAllocator.newNativeArena( -1, MemorySession.global());
+    }
+
+    @Test
+    public void testArrayAllocateDelegation() {
+        AtomicInteger calls = new AtomicInteger();
+        SegmentAllocator allocator = new SegmentAllocator() {
+            @Override
+            public MemorySegment allocate(long bytesSize, long bytesAlignment) {
+                return null;
+            }
+
+            @Override
+            public MemorySegment allocateArray(MemoryLayout elementLayout, long count) {
+                calls.incrementAndGet();
+                return null;
+            };
+        };
+        allocator.allocateArray(ValueLayout.JAVA_BYTE);
+        allocator.allocateArray(ValueLayout.JAVA_SHORT);
+        allocator.allocateArray(ValueLayout.JAVA_CHAR);
+        allocator.allocateArray(ValueLayout.JAVA_INT);
+        allocator.allocateArray(ValueLayout.JAVA_FLOAT);
+        allocator.allocateArray(ValueLayout.JAVA_LONG);
+        allocator.allocateArray(ValueLayout.JAVA_DOUBLE);
+        assertEquals(calls.get(), 7);
     }
 
     @Test(dataProvider = "arrayAllocations")
