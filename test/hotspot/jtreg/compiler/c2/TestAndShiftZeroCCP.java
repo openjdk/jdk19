@@ -25,7 +25,7 @@
  * @test
  * @bug 8288683
  * @library /test/lib
- * @summary Test that And nodes are added to the CCP worklist if it has an LShift as input.
+ * @summary Test that And nodes are added to the CCP worklist if they have an LShift as input.
  * @run main/othervm -Xbatch compiler.c2.TestAndShiftZeroCCP
  */
 package compiler.c2;
