@@ -136,7 +136,6 @@ public class TestNulls {
             "java.lang.foreign.MemorySession/allocateArray(java.lang.foreign.ValueLayout$OfFloat,float[])/1/0",
             "java.lang.foreign.MemorySession/allocateArray(java.lang.foreign.ValueLayout$OfLong,long[])/1/0",
             "java.lang.foreign.MemorySession/allocateArray(java.lang.foreign.ValueLayout$OfDouble,double[])/1/0"
-            
     );
 
     static final Set<String> OBJECT_METHODS = Stream.of(Object.class.getMethods())
