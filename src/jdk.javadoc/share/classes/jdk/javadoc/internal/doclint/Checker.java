@@ -267,7 +267,7 @@ public class Checker extends DocTreePathScanner<Void, Void> {
         return null;
     }
 
-    private  boolean isCanonicalRecordConstructor(ExecutableElement ee) {
+    private boolean isCanonicalRecordConstructor(ExecutableElement ee) {
         TypeElement te = (TypeElement) ee.getEnclosingElement();
         if (te.getKind() != ElementKind.RECORD) {
             return false;
