@@ -2352,7 +2352,7 @@ HeapWord* G1CollectedHeap::block_start(const void* addr) const {
   // the heap. HeapRegion::block_start() has been optimized to not accept addresses
   // outside of the allocated area.
   if (addr >= hr->top()) {
-    return hr->top();
+    return nullptr;
   }
   return hr->block_start(addr);
 }
