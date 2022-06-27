@@ -191,7 +191,7 @@ public class Checker extends DocTreePathScanner<Void, Void> {
                     reportMissing("dc.missing.comment");
                 }
                 return null;
-            } else if (tree.getFirstSentence().isEmpty() && !isOverridingMethod && notPseudoElement(p)) {
+            } else if (tree.getFirstSentence().isEmpty() && !isOverridingMethod && !pseudoElement(p)) {
                 if (tree.getBlockTags().isEmpty()) {
                     reportMissing("dc.empty.comment");
                     return null;
@@ -263,11 +263,11 @@ public class Checker extends DocTreePathScanner<Void, Void> {
         return null;
     }
 
-    // Checks if the passed tree path does NOT correspond to an entity, such as
+    // Checks if the passed tree path corresponds to an entity, such as
     // the overview file and doc-files/**/*.html files.
-    private boolean notPseudoElement(TreePath p) {
-        return p.getLeaf().getKind() != Tree.Kind.COMPILATION_UNIT
-                || p.getCompilationUnit().getSourceFile().getKind() != JavaFileObject.Kind.HTML;
+    private boolean pseudoElement(TreePath p) {
+        return p.getLeaf().getKind() == Tree.Kind.COMPILATION_UNIT
+                && p.getCompilationUnit().getSourceFile().getKind() == JavaFileObject.Kind.HTML;
     }
 
     private void reportMissing(String code, Object... args) {
