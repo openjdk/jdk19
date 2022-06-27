@@ -491,4 +491,13 @@ public class TestSegmentAllocators {
             }
         };
     }
+
+    @DataProvider(name = "allocators")
+    static Object[][] allocators() {
+        return new Object[][] {
+                { SegmentAllocator.implicitAllocator() },
+                { SegmentAllocator.newNativeArena(MemorySession.global()) },
+                { SegmentAllocator.prefixAllocator(MemorySegment.allocateNative(10, MemorySession.global())) },
+        };
+    }
 }
