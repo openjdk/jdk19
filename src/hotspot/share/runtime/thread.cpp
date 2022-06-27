@@ -2147,9 +2147,13 @@ void JavaThread::print_name_on_error(outputStream* st, char *buf, int buflen) co
 // JavaThread::print() is that we can't grab lock or allocate memory.
 void JavaThread::print_on_error(outputStream* st, char *buf, int buflen) const {
   st->print("%s \"%s\"", type_name(), get_thread_name_string(buf, buflen));
-  if (is_oop_safe()) {
+  Thread* current = Thread::current_or_null();
+  if (current != nullptr && (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe())) {
+    // Only access threadObj() if current thread is attached and
+    // if it is not a JavaThread or if it is a JavaThread that can safely
+    // access oops.
     oop thread_obj = threadObj();
-    if (thread_obj != NULL) {
+    if (thread_obj != nullptr) {
       if (java_lang_Thread::is_daemon(thread_obj)) st->print(" daemon");
     }
   }
@@ -2210,7 +2214,14 @@ const char* JavaThread::name() const  {
 // descriptive string if there is no set name.
 const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   const char* name_str;
-  if (is_oop_safe()) {
+  Thread* current = Thread::current_or_null();
+  if (current == nullptr) {
+    // Current thread is not attached so it can't safely determine this
+    // JavaThread's name so use the default thread name.
+    name_str = Thread::name();
+  } else if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
+    // Only access threadObj() if current thread is not a JavaThread
+    // or if it is a JavaThread that can safely access oops.
     oop thread_obj = threadObj();
     if (thread_obj != NULL) {
       oop name = java_lang_Thread::name(thread_obj);
@@ -2229,7 +2240,15 @@ const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
       name_str = Thread::name();
     }
   } else {
-    name_str = "<no-name - thread has exited>";
+    // Current JavaThread has exited...
+    if (current == this) {
+      // ... and is asking about itself:
+      name_str = "<no-name - current JavaThread has exited>";
+    } else {
+      // ... and it can't safely determine this JavaThread's name so
+      // use the default thread name.
+      name_str = Thread::name();
+    }
   }
   assert(name_str != NULL, "unexpected NULL thread name");
   return name_str;
