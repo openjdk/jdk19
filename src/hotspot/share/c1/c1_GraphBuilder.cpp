@@ -405,7 +405,7 @@ void BlockListBuilder::mark_loops() {
   // -  The bit is then propagated for all the blocks in the loop after we exit them (post-order). There could be multiple bits
   // of course in case of nested loops.
   // -  When we exit the loop header we remove that single bit and assign the real loop state for it.
-  // -  Now, the tricky part here is how we detect irriducible loops. In the algorithm above the loop state bits
+  // -  Now, the tricky part here is how we detect irreducible loops. In the algorithm above the loop state bits
   // are propagated to the predecessors. If we encounter an irreducible loop (a loop with multiple heads) we would see
   // a node with some loop bit set that would then propagate back and be never cleared because we would
   // never go back through the original loop header. Therefore if there are any irreducible loops the bits in the states
