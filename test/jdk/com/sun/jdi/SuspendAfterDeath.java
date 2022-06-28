@@ -36,7 +36,6 @@ import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 import java.util.*;
 
-
 class SuspendAfterDeathTarg {
     static final String THREAD_NAME = "duke";
 
@@ -61,7 +60,7 @@ class SuspendAfterDeathTarg {
 public class SuspendAfterDeath extends TestScaffold {
     private volatile ThreadReference thread;
     private volatile boolean breakpointReached = false;
-    
+
     SuspendAfterDeath(String args[]) {
         super(args);
     }
@@ -85,7 +84,7 @@ public class SuspendAfterDeath extends TestScaffold {
         System.out.println("Breakpoint, thread=" + eventThread);
         if (thread == null) {
             failure("FAILED: got Breakpoint event before ThreadDeath event.");
-        }            
+        }
         breakpointReached = true;
         /* Suspend the thread. This is being done after the thread has exited. */
         thread.suspend();
