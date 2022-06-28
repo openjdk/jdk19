@@ -110,7 +110,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         tagsMap.put(utils.getThrowsTrees(executable), executable);
         Content result = writer.getOutputInstance();
         Set<String> alreadyDocumented = new HashSet<>();
-        result.add(throwsTagsOutput(tagsMap, writer, alreadyDocumented, typeSubstitutions, true));
+        result.add(throwsTagsOutput(tagsMap, writer, alreadyDocumented, typeSubstitutions));
         result.add(inheritThrowsDocumentation(executable, thrownTypes, alreadyDocumented, typeSubstitutions, writer));
         result.add(linkToUndocumentedDeclaredExceptions(thrownTypes, alreadyDocumented, writer));
         return result;
@@ -148,16 +148,15 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
      * @param throwsTags        the collection of tags to be converted
      * @param writer            the taglet-writer used by the doclet
      * @param alreadyDocumented the set of exceptions that have already been documented
-     * @param allowDuplicates   {@code true} if we allow duplicate tags to be documented
      * @return the generated content for the tags
      */
     protected Content throwsTagsOutput(Map<List<ThrowsTree>, ExecutableElement> throwsTags,
                                        TagletWriter writer,
                                        Set<String> alreadyDocumented,
-                                       Map<String, TypeMirror> typeSubstitutions,
-                                       boolean allowDuplicates) {
+                                       Map<String, TypeMirror> typeSubstitutions) {
         Utils utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
+        var documentedInThisCall = new HashSet<String>();
         for (Entry<List<ThrowsTree>, ExecutableElement> entry : throwsTags.entrySet()) {
             Element e = entry.getValue();
             CommentHelper ch = utils.getCommentHelper(e);
@@ -165,25 +164,25 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 Element te = ch.getException(tag);
                 String excName = ch.getExceptionName(tag).toString();
                 TypeMirror substituteType = typeSubstitutions.get(excName);
-                if ((!allowDuplicates) &&
-                        (alreadyDocumented.contains(excName) ||
+                if ((alreadyDocumented.contains(excName) ||
                                 (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))) ||
                         (substituteType != null && alreadyDocumented.contains(substituteType.toString()))) {
                     continue;
                 }
-                if (alreadyDocumented.isEmpty()) {
+                if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
                     result.add(writer.getThrowsHeader());
                 }
                 result.add(writer.throwsTagOutput(e, tag, substituteType));
                 if (substituteType != null) {
-                    alreadyDocumented.add(substituteType.toString());
+                    documentedInThisCall.add(substituteType.toString());
                 } else {
-                    alreadyDocumented.add(te != null
+                    documentedInThisCall.add(te != null
                             ? utils.getFullyQualifiedName(te, false)
                             : excName);
                 }
             }
         }
+        alreadyDocumented.addAll(documentedInThisCall);
         return result;
     }
 
@@ -227,7 +226,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             }
         }
         result.add(throwsTagsOutput(declaredExceptionTags, writer, alreadyDocumented,
-                typeSubstitutions, false));
+                typeSubstitutions));
         return result;
     }
 
