@@ -147,7 +147,11 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
      *
      * @param throwsTags        the collection of tags to be converted
      * @param writer            the taglet-writer used by the doclet
-     * @param alreadyDocumented the set of exceptions that have already been documented
+     * @param alreadyDocumented the set of exceptions that have already been
+     *                          documented and thus must not be documented by
+     *                          this method. All exceptions documented by this
+     *                          method will be added to this set upon the
+     *                          method's return.
      * @return the generated content for the tags
      */
     protected Content throwsTagsOutput(Map<List<ThrowsTree>, ExecutableElement> throwsTags,
