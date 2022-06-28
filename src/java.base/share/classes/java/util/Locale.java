@@ -2605,8 +2605,8 @@ public final class Locale implements Cloneable, Serializable {
      *
      * <p>The following example shows how to obtain a {@code Locale} object
      * using a {@code Builder}.
-     * {@snippet :
-     *     Locale aLocale = new Locale.Builder().setLanguage("sr").setScript("Latn").setRegion("RS").build();
+     * {@snippet lang=java :
+     * Locale aLocale = new Locale.Builder().setLanguage("sr").setScript("Latn").setRegion("RS").build();
      * }
      *
      * <p>Builders can be reused; {@code clear()} resets all
