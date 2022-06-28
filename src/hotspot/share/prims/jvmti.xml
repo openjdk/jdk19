@@ -10606,12 +10606,10 @@ myInit() {
           permanent features of the Java platform.</i>
           <p/>
           Can support virtual threads.
-          If this capability is enabled then the following functions can be called:
-          <functionlink id="SuspendAllVirtualThreads"></functionlink>,
-          <functionlink id="ResumeAllVirtualThreads"></functionlink>,
-          and the following events can be enabled:
-          <eventlink id="VirtualThreadStart"></eventlink>,
-          <eventlink id="VirtualThreadEnd"></eventlink>,
+          See <functionlink id="SuspendAllVirtualThreads"/>,
+          <functionlink id="ResumeAllVirtualThreads"/>,
+          <eventlink id="VirtualThreadStart"/>,
+          and <eventlink id="VirtualThreadEnd"/>.
         </description>
       </capabilityfield>
     </capabilitiestypedef>
