@@ -57,6 +57,7 @@ public class VMDeprecatedOptions {
             {"TLABStats",                 "false"},
             {"AllowRedefinitionToAddDeleteMethods", "true"},
             {"AliasLevel", "3"},
+            {"CriticalJNINatives", "true"},
 
             // deprecated alias flags (see also aliased_jvm_flags):
             {"DefaultMaxRAMFraction", "4"},
