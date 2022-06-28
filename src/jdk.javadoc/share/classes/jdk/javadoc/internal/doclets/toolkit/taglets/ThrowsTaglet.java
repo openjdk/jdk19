@@ -168,9 +168,9 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 Element te = ch.getException(tag);
                 String excName = tag.getExceptionName().toString();
                 TypeMirror substituteType = typeSubstitutions.get(excName);
-                if ((alreadyDocumented.contains(excName) ||
-                                (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))) ||
-                        (substituteType != null && alreadyDocumented.contains(substituteType.toString()))) {
+                if (alreadyDocumented.contains(excName)
+                        || (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))
+                        || (substituteType != null && alreadyDocumented.contains(substituteType.toString()))) {
                     continue;
                 }
                 if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
