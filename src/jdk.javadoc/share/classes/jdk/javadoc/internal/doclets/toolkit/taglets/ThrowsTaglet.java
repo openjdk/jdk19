@@ -71,7 +71,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             var tag = (ThrowsTree) input.docTreeInfo.docTree();
             target = ch.getException(tag);
             input.tagId = target == null
-                    ? ch.getExceptionName(tag).getSignature()
+                    ? tag.getExceptionName().getSignature()
                     : utils.getFullyQualifiedName(target);
         } else {
             target = input.utils.findClass(input.element, input.tagId);
@@ -166,7 +166,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             CommentHelper ch = utils.getCommentHelper(e);
             for (ThrowsTree tag : entry.getKey()) {
                 Element te = ch.getException(tag);
-                String excName = ch.getExceptionName(tag).toString();
+                String excName = tag.getExceptionName().toString();
                 TypeMirror substituteType = typeSubstitutions.get(excName);
                 if ((alreadyDocumented.contains(excName) ||
                                 (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))) ||
