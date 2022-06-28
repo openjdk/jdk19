@@ -2147,11 +2147,10 @@ void JavaThread::print_name_on_error(outputStream* st, char *buf, int buflen) co
 // JavaThread::print() is that we can't grab lock or allocate memory.
 void JavaThread::print_on_error(outputStream* st, char *buf, int buflen) const {
   st->print("%s \"%s\"", type_name(), get_thread_name_string(buf, buflen));
-  Thread* current = Thread::current_or_null();
-  if (current != nullptr && (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe())) {
-    // Only access threadObj() if current thread is attached and
-    // if it is not a JavaThread or if it is a JavaThread that can safely
-    // access oops.
+  Thread* current = Thread::current();
+  if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
+    // Only access threadObj() if current thread is not a JavaThread
+    // or if it is a JavaThread that can safely access oops.
     oop thread_obj = threadObj();
     if (thread_obj != nullptr) {
       if (java_lang_Thread::is_daemon(thread_obj)) st->print(" daemon");
@@ -2214,12 +2213,8 @@ const char* JavaThread::name() const  {
 // descriptive string if there is no set name.
 const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   const char* name_str;
-  Thread* current = Thread::current_or_null();
-  if (current == nullptr) {
-    // Current thread is not attached so it can't safely determine this
-    // JavaThread's name so use the default thread name.
-    name_str = Thread::name();
-  } else if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
+  Thread* current = Thread::current();
+  if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
     // Only access threadObj() if current thread is not a JavaThread
     // or if it is a JavaThread that can safely access oops.
     oop thread_obj = threadObj();
