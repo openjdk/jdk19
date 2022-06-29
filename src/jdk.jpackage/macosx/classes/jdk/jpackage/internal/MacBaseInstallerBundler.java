@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -158,15 +159,10 @@ public abstract class MacBaseInstallerBundler extends AbstractBundler {
                 StandardBundlerParam.getPredefinedAppImage(params);
         if (predefinedImage != null) {
             appDir = appImageRoot.resolve(APP_NAME.fetchFrom(params) + ".app");
-            IOUtils.copyRecursive(predefinedImage, appDir);
+            IOUtils.copyRecursive(predefinedImage, appDir,
+                    LinkOption.NOFOLLOW_LINKS);
         } else {
             appDir = appImageBundler.execute(params, appImageRoot);
-        }
-
-        if (!StandardBundlerParam.isRuntimeInstaller(params)) {
-            new PackageFile(APP_NAME.fetchFrom(params)).save(
-                    ApplicationLayout.macAppImage().resolveAt(appDir));
-           Files.deleteIfExists(AppImageFile.getPathInAppImage(appDir));
         }
 
         return appDir;

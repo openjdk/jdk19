@@ -820,7 +820,7 @@ public final class JPackageCommand extends CommandArguments<JPackageCommand> {
     private void assertAppImageFile() {
         final Path lookupPath = AppImageFile.getPathInAppImage(Path.of(""));
 
-        if (isRuntime() || !isImagePackageType()) {
+        if (isRuntime() || (!isImagePackageType() && !TKit.isOSX())) {
             assertFileInAppImage(lookupPath, null);
         } else {
             assertFileInAppImage(lookupPath, lookupPath);
@@ -830,7 +830,8 @@ public final class JPackageCommand extends CommandArguments<JPackageCommand> {
     private void assertPackageFile() {
         final Path lookupPath = PackageFile.getPathInAppImage(Path.of(""));
 
-        if (isRuntime() || isImagePackageType() || TKit.isLinux()) {
+        if (isRuntime() || (isImagePackageType() && !TKit.isOSX()) ||
+                TKit.isLinux()) {
             assertFileInAppImage(lookupPath, null);
         } else {
             assertFileInAppImage(lookupPath, lookupPath);
