@@ -1743,7 +1743,7 @@ jvmtiEnv *jvmti;
       <origin>new</origin>
       <capabilities>
         <required id="can_suspend"></required>
-        <required id="can_support_virtual_threads"></required>
+        <required id="can_support_virtual_threads">Can support virtual threads</required>
       </capabilities>
       <parameters>
         <param id="except_count">
@@ -1871,7 +1871,7 @@ jvmtiEnv *jvmti;
       <origin>new</origin>
       <capabilities>
         <required id="can_suspend"></required>
-        <required id="can_support_virtual_threads"></required>
+        <required id="can_support_virtual_threads">Can support virtual threads</required>
       </capabilities>
       <parameters>
         <param id="except_count">
@@ -10606,10 +10606,12 @@ myInit() {
           permanent features of the Java platform.</i>
           <p/>
           Can support virtual threads.
-          See <functionlink id="SuspendAllVirtualThreads"/>,
-          <functionlink id="ResumeAllVirtualThreads"/>,
-          <eventlink id="VirtualThreadStart"/>,
-          and <eventlink id="VirtualThreadEnd"/>.
+          If this capability is enabled then the following functions can be called:
+          <functionlink id="SuspendAllVirtualThreads"></functionlink>,
+          <functionlink id="ResumeAllVirtualThreads"></functionlink>,
+          and the following events can be enabled:
+          <eventlink id="VirtualThreadStart"></eventlink>,
+          <eventlink id="VirtualThreadEnd"></eventlink>.
         </description>
       </capabilityfield>
     </capabilitiestypedef>
