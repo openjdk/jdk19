@@ -153,10 +153,10 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
      *                          method's return.
      * @return the generated content for the tags
      */
-    protected Content throwsTagsOutput(Map<ThrowsTree, ExecutableElement> throwsTags,
-                                       TagletWriter writer,
-                                       Set<String> alreadyDocumented,
-                                       Map<String, TypeMirror> typeSubstitutions) {
+    private Content throwsTagsOutput(Map<ThrowsTree, ExecutableElement> throwsTags,
+                                     TagletWriter writer,
+                                     Set<String> alreadyDocumented,
+                                     Map<String, TypeMirror> typeSubstitutions) {
         var utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
         var documentedInThisCall = new HashSet<String>();
