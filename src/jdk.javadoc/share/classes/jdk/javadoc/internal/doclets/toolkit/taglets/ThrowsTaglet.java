@@ -145,7 +145,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
     /**
      * Returns the generated content for a collection of {@code @throws} tags.
      *
-     * @param throwsTags        the collection of tags to be converted
+     * @param throwsTags        the tags to be converted; each tag is mapped to
+     *                          a method it appears on
      * @param writer            the taglet-writer used by the doclet
      * @param alreadyDocumented the set of exceptions that have already been
      *                          documented and thus must not be documented by
