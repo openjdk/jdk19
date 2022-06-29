@@ -54,7 +54,7 @@ public final class RecordedThread extends RecordedObject {
     /**
      * Returns the thread ID used by the operating system.
      *
-     * @return The Java thread ID, or {@code -1} if doesn't exist
+     * @return The OS thread ID, or {@code -1} if doesn't exist
      */
     public long getOSThreadId() {
         Long l = getTyped("osThreadId", Long.class, -1L);
@@ -97,7 +97,7 @@ public final class RecordedThread extends RecordedObject {
      * reused within the lifespan of the JVM.
      * <p>
      * See {@link #getJavaThreadId()} for the ID that is returned by
-     * {@code java.lang.Thread.getId()}
+     * {@code java.lang.Thread.threadId()}
      *
      * @return a unique ID for the thread
      */
