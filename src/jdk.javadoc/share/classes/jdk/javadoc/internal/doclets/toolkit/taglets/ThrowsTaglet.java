@@ -48,9 +48,7 @@ import com.sun.source.doctree.ThrowsTree;
 
 import jdk.javadoc.doclet.Taglet.Location;
 import jdk.javadoc.internal.doclets.toolkit.Content;
-import jdk.javadoc.internal.doclets.toolkit.util.CommentHelper;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFinder;
-import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 /**
  * A taglet that processes {@link ThrowsTree}, which represents
@@ -64,9 +62,9 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
 
     @Override
     public void inherit(DocFinder.Input input, DocFinder.Output output) {
-        Utils utils = input.utils;
+        var utils = input.utils;
         Element target;
-        CommentHelper ch = utils.getCommentHelper(input.element);
+        var ch = utils.getCommentHelper(input.element);
         if (input.tagId == null) {
             var tag = (ThrowsTree) input.docTreeInfo.docTree();
             target = ch.getException(tag);
@@ -97,13 +95,13 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
 
     @Override
     public Content getAllBlockTagOutput(Element holder, TagletWriter writer) {
-        Utils utils = writer.configuration().utils;
+        var utils = writer.configuration().utils;
         var executable = (ExecutableElement) holder;
         ExecutableType instantiatedType = utils.asInstantiatedMethodType(
                 writer.getCurrentPageElement(), executable);
         List<? extends TypeMirror> thrownTypes = instantiatedType.getThrownTypes();
         Map<String, TypeMirror> typeSubstitutions = getSubstitutedThrownTypes(
-                writer.configuration().utils.typeUtils,
+                utils.typeUtils,
                 executable.getThrownTypes(),
                 thrownTypes);
         Map<ThrowsTree, ExecutableElement> tagsMap = new LinkedHashMap<>();
@@ -159,12 +157,12 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                                        TagletWriter writer,
                                        Set<String> alreadyDocumented,
                                        Map<String, TypeMirror> typeSubstitutions) {
-        Utils utils = writer.configuration().utils;
+        var utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
         var documentedInThisCall = new HashSet<String>();
         for (Entry<ThrowsTree, ExecutableElement> entry : throwsTags.entrySet()) {
             Element e = entry.getValue();
-            CommentHelper ch = utils.getCommentHelper(e);
+            var ch = utils.getCommentHelper(e);
             ThrowsTree tag = entry.getKey();
             Element te = ch.getException(tag);
             String excName = tag.getExceptionName().toString();
@@ -208,7 +206,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             assert holder.getKind() == ElementKind.CONSTRUCTOR : holder.getKind();
             return result;
         }
-        Utils utils = writer.configuration().utils;
+        var utils = writer.configuration().utils;
         Map<ThrowsTree, ExecutableElement> declaredExceptionTags = new LinkedHashMap<>();
         for (TypeMirror declaredExceptionType : declaredExceptionTypes) {
             var input = new DocFinder.Input(utils, holder, this,
@@ -236,7 +234,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                                                          Set<String> alreadyDocumented,
                                                          TagletWriter writer) {
         // TODO: assert declaredExceptionTypes are instantiated
-        Utils utils = writer.configuration().utils;
+        var utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
         for (TypeMirror declaredExceptionType : declaredExceptionTypes) {
             TypeElement te = utils.asTypeElement(declaredExceptionType);
