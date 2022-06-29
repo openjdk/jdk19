@@ -26,13 +26,13 @@
  * @bug 8284358
  * @summary An unreachable loop is not removed, leading to a broken graph.
  * @requires vm.compiler2.enabled
- * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:+StressIGVN -XX:StressSeed=1448005075
+ * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:+UnlockDiagnosticVMOptions -XX:+StressIGVN -XX:StressSeed=1448005075
  *                   -XX:CompileCommand=compileonly,*TestDeadDataLoop::test* -XX:CompileCommand=dontinline,*TestDeadDataLoop::notInlined
  *                   compiler.c2.TestDeadDataLoop
- * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:+StressIGVN -XX:StressSeed=1922737097
+ * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:+UnlockDiagnosticVMOptions -XX:+StressIGVN -XX:StressSeed=1922737097
  *                   -XX:CompileCommand=compileonly,*TestDeadDataLoop::test* -XX:CompileCommand=dontinline,*TestDeadDataLoop::notInlined
  *                   compiler.c2.TestDeadDataLoop
- * @run main/othervm -Xcomp -XX:-TieredCompilation
+ * @run main/othervm -Xcomp -XX:-TieredCompilation -XX:+UnlockDiagnosticVMOptions -XX:+StressIGVN
  *                   -XX:CompileCommand=compileonly,*TestDeadDataLoop::test* -XX:CompileCommand=dontinline,*TestDeadDataLoop::notInlined
  *                   compiler.c2.TestDeadDataLoop
  */
