@@ -106,8 +106,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 writer.configuration().utils.typeUtils,
                 executable.getThrownTypes(),
                 thrownTypes);
-        Map<List<ThrowsTree>, ExecutableElement> tagsMap = new LinkedHashMap<>();
-        tagsMap.put(utils.getThrowsTrees(executable), executable);
+        Map<ThrowsTree, ExecutableElement> tagsMap = new LinkedHashMap<>();
+        utils.getThrowsTrees(executable).forEach(t -> tagsMap.put(t, executable));
         Content result = writer.getOutputInstance();
         Set<String> alreadyDocumented = new HashSet<>();
         result.add(throwsTagsOutput(tagsMap, writer, alreadyDocumented, typeSubstitutions));
@@ -154,36 +154,35 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
      *                          method's return.
      * @return the generated content for the tags
      */
-    protected Content throwsTagsOutput(Map<List<ThrowsTree>, ExecutableElement> throwsTags,
+    protected Content throwsTagsOutput(Map<ThrowsTree, ExecutableElement> throwsTags,
                                        TagletWriter writer,
                                        Set<String> alreadyDocumented,
                                        Map<String, TypeMirror> typeSubstitutions) {
         Utils utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
         var documentedInThisCall = new HashSet<String>();
-        for (Entry<List<ThrowsTree>, ExecutableElement> entry : throwsTags.entrySet()) {
+        for (Entry<ThrowsTree, ExecutableElement> entry : throwsTags.entrySet()) {
             Element e = entry.getValue();
             CommentHelper ch = utils.getCommentHelper(e);
-            for (ThrowsTree tag : entry.getKey()) {
-                Element te = ch.getException(tag);
-                String excName = tag.getExceptionName().toString();
-                TypeMirror substituteType = typeSubstitutions.get(excName);
-                if (alreadyDocumented.contains(excName)
-                        || (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))
-                        || (substituteType != null && alreadyDocumented.contains(substituteType.toString()))) {
-                    continue;
-                }
-                if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
-                    result.add(writer.getThrowsHeader());
-                }
-                result.add(writer.throwsTagOutput(e, tag, substituteType));
-                if (substituteType != null) {
-                    documentedInThisCall.add(substituteType.toString());
-                } else {
-                    documentedInThisCall.add(te != null
-                            ? utils.getFullyQualifiedName(te, false)
-                            : excName);
-                }
+            ThrowsTree tag = entry.getKey();
+            Element te = ch.getException(tag);
+            String excName = tag.getExceptionName().toString();
+            TypeMirror substituteType = typeSubstitutions.get(excName);
+            if (alreadyDocumented.contains(excName)
+                    || (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))
+                    || (substituteType != null && alreadyDocumented.contains(substituteType.toString()))) {
+                continue;
+            }
+            if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
+                result.add(writer.getThrowsHeader());
+            }
+            result.add(writer.throwsTagOutput(e, tag, substituteType));
+            if (substituteType != null) {
+                documentedInThisCall.add(substituteType.toString());
+            } else {
+                documentedInThisCall.add(te != null
+                        ? utils.getFullyQualifiedName(te, false)
+                        : excName);
             }
         }
         alreadyDocumented.addAll(documentedInThisCall);
@@ -209,7 +208,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             return result;
         }
         Utils utils = writer.configuration().utils;
-        Map<List<ThrowsTree>, ExecutableElement> declaredExceptionTags = new LinkedHashMap<>();
+        Map<ThrowsTree, ExecutableElement> declaredExceptionTags = new LinkedHashMap<>();
         for (TypeMirror declaredExceptionType : declaredExceptionTypes) {
             var input = new DocFinder.Input(utils, holder, this,
                     utils.getTypeName(declaredExceptionType, false));
@@ -223,10 +222,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 if (inheritedDoc.holder == null) {
                     inheritedDoc.holder = holder;
                 }
-                List<ThrowsTree> inheritedTags = inheritedDoc.tagList.stream()
-                        .map(t -> (ThrowsTree) t)
-                        .toList();
-                declaredExceptionTags.put(inheritedTags, (ExecutableElement) inheritedDoc.holder);
+                var h = (ExecutableElement) inheritedDoc.holder;
+                inheritedDoc.tagList.forEach(t -> declaredExceptionTags.put((ThrowsTree) t, h));
             }
         }
         result.add(throwsTagsOutput(declaredExceptionTags, writer, alreadyDocumented,

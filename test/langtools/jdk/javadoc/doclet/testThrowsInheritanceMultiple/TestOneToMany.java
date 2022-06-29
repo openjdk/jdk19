@@ -305,4 +305,49 @@ public class TestOneToMany extends JavadocTester {
                 <dd><code><a href="MyCheckedException.html" title="class in x">MyCheckedException</a></code> - if that</dd>
                 </dl>""");
     }
+
+    @Test
+    public void testSubExceptionDoubleInheritance(Path base) throws Exception {
+        var src = base.resolve("src");
+        tb.writeJavaFiles(src, """
+                package x;
+
+                public class MyException extends Exception { }
+                """, """
+                package x;
+
+                public class MySubException extends MyException { }
+                """, """
+                package x;
+
+                public interface I {
+
+                    /**
+                     * @throws MyException if this
+                     * @throws MySubException if that
+                     */
+                    void m() throws MyException, MySubException;
+                }
+                """, """
+                package x;
+
+                public interface I1 extends I {
+
+                    @Override
+                    void m() throws MyException, MySubException;
+                }
+                """);
+        javadoc("-d", base.resolve("out").toString(),
+                "-sourcepath", src.toString(),
+                "x");
+        checkExit(Exit.OK);
+        checkOutput("x/I1.html", true, """
+                <dl class="notes">
+                <dt>Specified by:</dt>
+                <dd><code><a href="I.html#m()">m</a></code>&nbsp;in interface&nbsp;<code><a href="I.html" title="interface in x">I</a></code></dd>
+                <dt>Throws:</dt>
+                <dd><code><a href="MyException.html" title="class in x">MyException</a></code> - if this</dd>
+                <dd><code><a href="MySubException.html" title="class in x">MySubException</a></code> - if that</dd>
+                </dl>""");
+    }
 }
