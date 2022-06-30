@@ -59,7 +59,7 @@ class SuspendAfterDeathTarg {
 
 public class SuspendAfterDeath extends TestScaffold {
     private volatile ThreadReference thread;
-    private volatile boolean breakpointReached = false;
+    private volatile boolean breakpointReached;
 
     SuspendAfterDeath(String args[]) {
         super(args);
