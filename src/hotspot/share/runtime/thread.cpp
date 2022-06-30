@@ -794,7 +794,8 @@ void JavaThread::set_threadOopHandles(oop p) {
 }
 
 oop JavaThread::threadObj() const {
-  Thread* current = Thread::current();
+  Thread* current = Thread::current_or_null_safe();
+  assert(current != nullptr, "cannot be called by a detached thread");
   guarantee(current != this || JavaThread::cast(current)->is_oop_safe(),
             "current cannot touch oops after its GC barrier is detached.");
   return _threadObj.resolve();
@@ -2147,7 +2148,8 @@ void JavaThread::print_name_on_error(outputStream* st, char *buf, int buflen) co
 // JavaThread::print() is that we can't grab lock or allocate memory.
 void JavaThread::print_on_error(outputStream* st, char *buf, int buflen) const {
   st->print("%s \"%s\"", type_name(), get_thread_name_string(buf, buflen));
-  Thread* current = Thread::current();
+  Thread* current = Thread::current_or_null_safe();
+  assert(current != nullptr, "cannot be called by a detached thread");
   if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
     // Only access threadObj() if current thread is not a JavaThread
     // or if it is a JavaThread that can safely access oops.
@@ -2213,7 +2215,8 @@ const char* JavaThread::name() const  {
 // descriptive string if there is no set name.
 const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   const char* name_str;
-  Thread* current = Thread::current();
+  Thread* current = Thread::current_or_null_safe();
+  assert(current != nullptr, "cannot be called by a detached thread");
   if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
     // Only access threadObj() if current thread is not a JavaThread
     // or if it is a JavaThread that can safely access oops.
