@@ -2905,7 +2905,6 @@ class StubGenerator: public StubCodeGenerator {
     // structure. See also comment in stubRoutines.hpp.
     StubRoutines::_forward_exception_entry                 = generate_forward_exception();
 
-    assert(StubRoutines::_call_stub_return_address != NULL, "_call_stub_return_address NULL check"); // TODO: Rm this!
     StubRoutines::_call_stub_entry                         = generate_call_stub(StubRoutines::_call_stub_return_address);
     StubRoutines::_catch_exception_entry                   = generate_catch_exception();
 
@@ -2935,6 +2934,8 @@ class StubGenerator: public StubCodeGenerator {
   }
 
   void generate_phase1() {
+    if (!Continuations::enabled()) return;
+
     // Continuation stubs:
     StubRoutines::_cont_thaw          = generate_cont_thaw();
     StubRoutines::_cont_returnBarrier = generate_cont_returnBarrier();

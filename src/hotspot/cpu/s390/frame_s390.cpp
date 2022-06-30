@@ -230,17 +230,9 @@ frame frame::sender_for_interpreter_frame(RegisterMap *map) const {
   return frame(sender_sp(), sender_pc(), (intptr_t*)(ijava_state()->sender_sp));
 }
 
-intptr_t* frame::compiled_sender_sp(CodeBlob* cb) const {
-  return sender_sp();
-}
-
-address* frame::compiled_sender_pc_addr(CodeBlob* cb) const {
-  return sender_pc_addr();
-}
-
 void frame::patch_pc(Thread* thread, address pc) {
   assert(_cb == CodeCache::find_blob(pc), "unexpected pc");
-  address* pc_addr = (address*)&(own_abi()->return_pc); // TODO: This won't be lr on s390. Correct.
+  address* pc_addr = (address*)&(own_abi()->return_pc);
 
   if (TracePcPatching) {
     tty->print_cr("patch_pc at address  " PTR_FORMAT " [" PTR_FORMAT " -> " PTR_FORMAT "] ",
@@ -256,7 +248,7 @@ void frame::patch_pc(Thread* thread, address pc) {
   _pc = pc; // must be set before call to get_deopt_original_pc
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
-    assert(original_pc == _pc, "expected original to be stored before patching");
+    // assert(original_pc == _pc, "expected original to be stored before patching");
     _deopt_state = is_deoptimized;
     _pc = original_pc;
   } else {
