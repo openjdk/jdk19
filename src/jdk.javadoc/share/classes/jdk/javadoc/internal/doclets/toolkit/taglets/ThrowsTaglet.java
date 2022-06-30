@@ -108,7 +108,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         utils.getThrowsTrees(executable).forEach(t -> tagsMap.put(t, executable));
         Content result = writer.getOutputInstance();
         Set<String> alreadyDocumented = new HashSet<>();
-        result.add(throwsTagsOutput(tagsMap, writer, alreadyDocumented, typeSubstitutions));
+        result.add(throwsTagsOutput(tagsMap, alreadyDocumented, typeSubstitutions, writer));
         result.add(inheritThrowsDocumentation(executable, thrownTypes, alreadyDocumented, typeSubstitutions, writer));
         result.add(linkToUndocumentedDeclaredExceptions(thrownTypes, alreadyDocumented, writer));
         return result;
@@ -145,18 +145,18 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
      *
      * @param throwsTags        the tags to be converted; each tag is mapped to
      *                          a method it appears on
-     * @param writer            the taglet-writer used by the doclet
      * @param alreadyDocumented the set of exceptions that have already been
      *                          documented and thus must not be documented by
      *                          this method. All exceptions documented by this
      *                          method will be added to this set upon the
      *                          method's return.
+     * @param writer            the taglet-writer used by the doclet
      * @return the generated content for the tags
      */
     private Content throwsTagsOutput(Map<ThrowsTree, ExecutableElement> throwsTags,
-                                     TagletWriter writer,
                                      Set<String> alreadyDocumented,
-                                     Map<String, TypeMirror> typeSubstitutions) {
+                                     Map<String, TypeMirror> typeSubstitutions,
+                                     TagletWriter writer) {
         var utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
         var documentedInThisCall = new HashSet<String>();
@@ -225,8 +225,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 inheritedDoc.tagList.forEach(t -> declaredExceptionTags.put((ThrowsTree) t, h));
             }
         }
-        result.add(throwsTagsOutput(declaredExceptionTags, writer, alreadyDocumented,
-                typeSubstitutions));
+        result.add(throwsTagsOutput(declaredExceptionTags, alreadyDocumented, typeSubstitutions,
+                writer));
         return result;
     }
 
