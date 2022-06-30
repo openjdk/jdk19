@@ -360,10 +360,10 @@ abstract public class TestScaffold extends TargetAdapter {
     }
 
     protected void startUp(String targetName) {
-        List argList = new ArrayList(Arrays.asList(args));
+        List<String> argList = new ArrayList(Arrays.asList(args));
         argList.add(targetName);
         println("run args: " + argList);
-        connect((String[]) argList.toArray(args));
+        connect(argList.toArray(args));
         waitForVMStart();
     }
 

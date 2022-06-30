@@ -94,9 +94,9 @@ public class SuspendAfterDeath extends TestScaffold {
     public void connect(String args[]) {
         String mainWrapper = System.getProperty("main.wrapper");
         if ("Virtual".equals(mainWrapper)) {
-            List argList = new ArrayList(Arrays.asList(args));
+            List<String> argList = new ArrayList(Arrays.asList(args));
             argList.add("Virtual");
-            args = (String[]) argList.toArray(args);
+            args = argList.toArray(args);
         }
         super.connect(args);
     }
