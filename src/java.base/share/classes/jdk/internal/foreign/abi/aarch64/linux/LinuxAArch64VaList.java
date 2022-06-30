@@ -358,12 +358,7 @@ public non-sealed class LinuxAArch64VaList implements VaList, Scoped {
     }
 
     private void checkStackElement(MemoryLayout layout) {
-        long alignmentOffset = 0;
-        if (layout.byteAlignment() > STACK_SLOT_SIZE) {
-            long addr = stackPtr().toRawLongValue();
-            alignmentOffset = Utils.alignUp(addr, 16) - addr;
-        }
-        if (alignmentOffset + layout.byteSize() > stack.byteSize()) {
+        if (preAlignOffset(layout) + layout.byteSize() > stack.byteSize()) {
             throw SharedUtils.newVaListNSEE(layout);
         }
     }
