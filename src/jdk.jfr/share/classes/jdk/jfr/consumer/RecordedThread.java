@@ -86,6 +86,8 @@ public final class RecordedThread extends RecordedObject {
      * Returns the Java thread ID, or {@code -1} if it's not a Java thread.
      *
      * @return the Java thread ID, or {@code -1} if it's not a Java thread
+     *
+     * @see java.lang.Thread#threadId()
      */
     public long getJavaThreadId() {
         Long l = getTyped("javaThreadId", Long.class, -1L);
