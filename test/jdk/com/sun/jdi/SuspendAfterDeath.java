@@ -22,7 +22,7 @@
  */
 
 /**
- * @test
+ * @test id=platform_thread
  * @bug 8287847
  * @summary Test suspending a thread after it has terminated.
  * @enablePreview
@@ -31,6 +31,18 @@
  * @run compile SuspendAfterDeath.java
  * @run main/othervm SuspendAfterDeath
  */
+
+/**
+ * @test id=virtual_thread
+ * @bug 8287847
+ * @summary Test suspending a thread after it has terminated.
+ * @enablePreview
+ * @requires vm.continuations
+ * @run build TestScaffold VMConnection TargetListener TargetAdapter
+ * @run compile SuspendAfterDeath.java
+ * @run main/othervm SuspendAfterDeath Virtual
+ */
+
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
@@ -60,13 +72,23 @@ class SuspendAfterDeathTarg {
 public class SuspendAfterDeath extends TestScaffold {
     private volatile ThreadReference thread;
     private volatile boolean breakpointReached;
+    private static boolean useVirtualThread = false;
 
-    SuspendAfterDeath(String args[]) {
-        super(args);
+    SuspendAfterDeath() {
+        super(new String[0]); // no args to pass along to debuggee
     }
 
     public static void main(String[] args) throws Exception {
-        new SuspendAfterDeath(args).startTests();
+        if (args.length == 1) {
+            if ("Virtual".equals(args[0])) {
+                useVirtualThread = true; // see connect() below for how this is handled
+            } else {
+                throw new RuntimeException("SuspendAfterDeath: invalid argument: " + args[0]);
+            }
+        } else if (args.length != 0) {
+            throw new RuntimeException("SuspendAfterDeath: incorrect number of arguments: " + args.length);
+        }
+        new SuspendAfterDeath().startTests();
     }
 
     @Override
@@ -92,8 +114,8 @@ public class SuspendAfterDeath extends TestScaffold {
 
     @Override
     public void connect(String args[]) {
-        String mainWrapper = System.getProperty("main.wrapper");
-        if ("Virtual".equals(mainWrapper)) {
+        if (useVirtualThread) {
+            /* Append the "Virtual" argument to the arguments used for the debuggee. */
             List<String> argList = new ArrayList(Arrays.asList(args));
             argList.add("Virtual");
             args = argList.toArray(args);
