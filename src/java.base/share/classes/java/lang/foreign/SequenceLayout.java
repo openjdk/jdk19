@@ -211,10 +211,9 @@ public final class SequenceLayout extends AbstractLayout implements MemoryLayout
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof SequenceLayout s)) {
-            return false;
-        }
-        return elemCount == s.elemCount && elementLayout.equals(s.elementLayout);
+        return other instanceof SequenceLayout otherSeq &&
+                elemCount == otherSeq.elemCount &&
+                elementLayout.equals(otherSeq.elementLayout);
     }
 
     @Override

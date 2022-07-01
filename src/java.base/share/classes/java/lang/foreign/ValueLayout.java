@@ -116,11 +116,9 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
         if (!super.equals(other)) {
             return false;
         }
-        if (!(other instanceof ValueLayout v)) {
-            return false;
-        }
-        return carrier.equals(v.carrier) &&
-            order.equals(v.order);
+        return other instanceof ValueLayout otherValue &&
+                carrier.equals(otherValue.carrier) &&
+                order.equals(otherValue.order);
     }
 
     /**
@@ -207,7 +205,7 @@ public sealed class ValueLayout extends AbstractLayout implements MemoryLayout {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), order, bitSize(), alignment);
+        return Objects.hash(super.hashCode(), order, carrier);
     }
 
     @Override

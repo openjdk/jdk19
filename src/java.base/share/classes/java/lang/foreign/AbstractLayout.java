@@ -128,7 +128,7 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
      */
     @Override
     public int hashCode() {
-        return name.hashCode() << Long.hashCode(alignment);
+        return Objects.hash(name, size, alignment);
     }
 
     /**
@@ -145,22 +145,19 @@ abstract non-sealed class AbstractLayout implements MemoryLayout {
      *     {@link GroupLayout#isUnion()}) and if their member layouts (see {@link GroupLayout#memberLayouts()}) are also equal</li>
      * </ul>
      *
-     * @param that the object to be compared for equality with this layout.
+     * @param other the object to be compared for equality with this layout.
      * @return {@code true} if the specified object is equal to this layout.
      */
     @Override
-    public boolean equals(Object that) {
-        if (this == that) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         }
 
-        if (!(that instanceof AbstractLayout)) {
-            return false;
-        }
-
-        return Objects.equals(name, ((AbstractLayout) that).name) &&
-                Objects.equals(size, ((AbstractLayout)that).size) &&
-                Objects.equals(alignment, ((AbstractLayout) that).alignment);
+        return other instanceof AbstractLayout otherLayout &&
+                name.equals(otherLayout.name) &&
+                size == otherLayout.size &&
+                alignment == otherLayout.alignment;
     }
 
     /**
