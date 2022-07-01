@@ -193,4 +193,22 @@ public class Domination {
             case ((R(int a))): return -1;
         }
     }
+
+    int testRecordPatternsDominated7() {
+        record R(int a) {}
+        Object o = null;
+        switch (o) {
+            case R r when true: return 1;
+            case R(int a): return -1;
+        }
+    }
+
+    int testRecordPatternsDominated8() {
+        record R(int a) {}
+        Object o = null;
+        switch (o) {
+            case R(int a) when true: return 1;
+            case R(int a): return -1;
+        }
+    }
 }
