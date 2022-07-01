@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8067757
+ * @bug 8067757 6509045
  * @library /tools/lib ../../lib
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -348,6 +348,99 @@ public class TestOneToMany extends JavadocTester {
                 <dt>Throws:</dt>
                 <dd><code><a href="MyException.html" title="class in x">MyException</a></code> - if this</dd>
                 <dd><code><a href="MySubException.html" title="class in x">MySubException</a></code> - if that</dd>
+                </dl>""");
+    }
+
+    @Test
+    public void testUncheckedExceptionTag(Path base) throws Exception {
+        var src = base.resolve("src");
+        tb.writeJavaFiles(src, """
+                package x;
+
+                public class MyRuntimeException extends RuntimeException { }
+                """, """
+                package x;
+
+                public interface I {
+
+                    /**
+                     * @throws MyRuntimeException if this
+                     * @throws MyRuntimeException if that
+                     */
+                    void m();
+                }
+                """, """
+                package x;
+
+                public interface I1 extends I {
+
+                    /**
+                     * @throws MyRuntimeException {@inheritDoc}
+                     */
+                    @Override
+                    void m();
+                }
+                """, """
+                package x;
+
+                public class IImpl implements I {
+
+                    /**
+                     * @throws MyRuntimeException {@inheritDoc}
+                     */
+                    @Override
+                    public void m() { }
+                }
+                """, """
+                package x;
+
+                public class C {
+
+                    /**
+                     * @throws MyRuntimeException if this
+                     * @throws MyRuntimeException if that
+                     */
+                    public void m();
+                }
+                """, """
+                package x;
+
+                public class C1 extends C {
+
+                    /**
+                     * @throws MyRuntimeException {@inheritDoc}
+                     */
+                    @Override
+                    public void m() { }
+                }
+                """);
+        javadoc("-d", base.resolve("out").toString(),
+                "-sourcepath", src.toString(),
+                "x");
+        checkExit(Exit.OK);
+        checkOutput("x/IImpl.html", true, """
+                <dl class="notes">
+                <dt>Specified by:</dt>
+                <dd><code><a href="I.html#m()">m</a></code>&nbsp;in interface&nbsp;<code><a href="I.html" title="interface in x">I</a></code></dd>
+                <dt>Throws:</dt>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if this</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if that</dd>
+                </dl>""");
+        checkOutput("x/I1.html", true, """
+                <dl class="notes">
+                <dt>Specified by:</dt>
+                <dd><code><a href="I.html#m()">m</a></code>&nbsp;in interface&nbsp;<code><a href="I.html" title="interface in x">I</a></code></dd>
+                <dt>Throws:</dt>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if this</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if that</dd>
+                </dl>""");
+        checkOutput("x/C1.html", true, """
+                <dl class="notes">
+                <dt>Overrides:</dt>
+                <dd><code><a href="C.html#m()">m</a></code>&nbsp;in class&nbsp;<code><a href="C.html" title="class in x">C</a></code></dd>
+                <dt>Throws:</dt>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if this</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if that</dd>
                 </dl>""");
     }
 }

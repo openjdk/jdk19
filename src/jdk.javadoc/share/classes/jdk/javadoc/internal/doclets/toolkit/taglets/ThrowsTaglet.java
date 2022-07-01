@@ -25,6 +25,7 @@
 
 package jdk.javadoc.internal.doclets.toolkit.taglets;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -175,13 +176,44 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
                 result.add(writer.getThrowsHeader());
             }
-            result.add(writer.throwsTagOutput(e, tag, substituteType));
-            if (substituteType != null) {
-                documentedInThisCall.add(substituteType.toString());
+
+            final List<DocTree> tags = new ArrayList<>();
+            if (tag.getDescription().stream().anyMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
+                // @throws is the only tag where it currently makes sense
+                // to expand {@inheritDoc} to more than one tag.
+                // So we override the normal flow of inheritance for this tag only.
+                // Here's what we do if @throws has {@inheritDoc} inside it:
+                // 1. try to inherit
+                // 2. if tag.getDescription() adds to it, then:
+                //   2.1. if inherited none or one go skip, delegate to the old code
+                //   2.2. otherwise (inherited more than one tag) raise an error
+                // 3. otherwise (tag does not add to it), add all tags
+                var input = new DocFinder.Input(utils, e, this,
+                        new DocFinder.DocTreeInfo(tag, e), false, true);
+                var output = DocFinder.search(writer.configuration(), input);
+                if (output.tagList.size() <= 1) {
+                    // old code will doo just fine
+                    tags.add(tag);
+                } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
+                    // error (cannot do this reliably, probably is a programmatic error)
+                    // TODO: warn
+                    tags.add(tag);
+                } else {
+                    tags.addAll(output.tagList);
+                }
             } else {
-                documentedInThisCall.add(te != null
-                        ? utils.getFullyQualifiedName(te, false)
-                        : excName);
+                tags.add(tag);
+            }
+
+            for (DocTree d : tags) {
+                result.add(writer.throwsTagOutput(e, (ThrowsTree) d, substituteType));
+                if (substituteType != null) {
+                    documentedInThisCall.add(substituteType.toString());
+                } else {
+                    documentedInThisCall.add(te != null
+                            ? utils.getFullyQualifiedName(te, false)
+                            : excName);
+                }
             }
         }
         alreadyDocumented.addAll(documentedInThisCall);
