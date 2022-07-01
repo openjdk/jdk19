@@ -2215,11 +2215,13 @@ const char* JavaThread::name() const  {
 // descriptive string if there is no set name.
 const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
   const char* name_str;
+#ifdef ASSERT
   Thread* current = Thread::current_or_null_safe();
   assert(current != nullptr, "cannot be called by a detached thread");
   if (!current->is_Java_thread() || JavaThread::cast(current)->is_oop_safe()) {
     // Only access threadObj() if current thread is not a JavaThread
     // or if it is a JavaThread that can safely access oops.
+#endif
     oop thread_obj = threadObj();
     if (thread_obj != NULL) {
       oop name = java_lang_Thread::name(thread_obj);
@@ -2237,6 +2239,7 @@ const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
     } else {
       name_str = Thread::name();
     }
+#ifdef ASSERT
   } else {
     // Current JavaThread has exited...
     if (current == this) {
@@ -2248,6 +2251,7 @@ const char* JavaThread::get_thread_name_string(char* buf, int buflen) const {
       name_str = Thread::name();
     }
   }
+#endif
   assert(name_str != NULL, "unexpected NULL thread name");
   return name_str;
 }
