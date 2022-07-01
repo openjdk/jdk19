@@ -24,7 +24,7 @@
 /**
  * @test id=platform_thread
  * @bug 8287847
- * @summary Test suspending a thread after it has terminated.
+ * @summary Test suspending a platform thread after it has terminated.
  * @enablePreview
  * @requires vm.continuations
  * @run build TestScaffold VMConnection TargetListener TargetAdapter
@@ -35,7 +35,7 @@
 /**
  * @test id=virtual_thread
  * @bug 8287847
- * @summary Test suspending a thread after it has terminated.
+ * @summary Test suspending a virtual thread after it has terminated.
  * @enablePreview
  * @requires vm.continuations
  * @run build TestScaffold VMConnection TargetListener TargetAdapter
