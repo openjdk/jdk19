@@ -99,7 +99,10 @@ public final class RecordedThread extends RecordedObject {
      * reused within the lifespan of the JVM.
      * <p>
      * See {@link #getJavaThreadId()} for the ID that is returned by
-     * {@code java.lang.Thread.threadId()}
+     * {@code java.lang.Thread.threadId()}.
+     * <p>
+     * See {@link #getOSThreadId()} for the ID that is returned by
+     * the operating system.
      *
      * @return a unique ID for the thread
      */
