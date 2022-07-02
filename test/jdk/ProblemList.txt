@@ -739,6 +739,8 @@ sun/tools/jstat/jstatLineCounts2.sh                             8268211 linux-aa
 sun/tools/jstat/jstatLineCounts3.sh                             8268211 linux-aarch64
 sun/tools/jstat/jstatLineCounts4.sh                             8268211 linux-aarch64
 
+sun/tools/jhsdb/JStackStressTest.java                           8276210 linux-aarch64
+
 ############################################################################
 
 # jdk_other
@@ -756,6 +758,7 @@ jdk/jfr/event/os/TestThreadContextSwitches.java                 8247776 windows-
 jdk/jfr/startupargs/TestStartName.java                          8214685 windows-x64
 jdk/jfr/startupargs/TestStartDuration.java                      8214685 windows-x64
 jdk/jfr/jvm/TestWaste.java                                      8282427 generic-all
+jdk/jfr/api/consumer/recordingstream/TestOnEvent.java           8255404 linux-x64
 
 ############################################################################
 
