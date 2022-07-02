@@ -70,7 +70,7 @@ class SuspendAfterDeathTarg {
 }
 
 public class SuspendAfterDeath extends TestScaffold {
-    private volatile ThreadReference thread;
+    private volatile ThreadReference targetThread;
     private volatile boolean breakpointReached;
     private static boolean useVirtualThread = false;
 
@@ -95,8 +95,12 @@ public class SuspendAfterDeath extends TestScaffold {
     public void threadDied(ThreadDeathEvent event) {
         ThreadReference eventThread = event.thread();
         if (eventThread.name().equals(SuspendAfterDeathTarg.THREAD_NAME)) {
-            System.out.println("Target thread died, thread=" + eventThread);
-            thread = eventThread;
+            System.out.println("Target thread died, thread=" + eventThread +
+                               ", state=" + eventThread.status());
+            targetThread = eventThread;
+            if (targetThread.status() != ThreadReference.THREAD_STATUS_RUNNING) {
+                failure("FAILED: wrong state for thread: " + targetThread.status());
+            }
         }
     }
 
@@ -104,12 +108,18 @@ public class SuspendAfterDeath extends TestScaffold {
     public void breakpointReached(BreakpointEvent event) {
         ThreadReference eventThread = event.thread();
         System.out.println("Breakpoint, thread=" + eventThread);
-        if (thread == null) {
+        if (targetThread == null) {
             failure("FAILED: got Breakpoint event before ThreadDeath event.");
+        } else {
+            System.out.println("Target thread status at breakpoint: thread=" + targetThread +
+                               ", state=" + targetThread.status());
+            if (targetThread.status() != ThreadReference.THREAD_STATUS_ZOMBIE) {
+                failure("FAILED: wrong state for thread: " + targetThread.status());
+            }
+            breakpointReached = true;
+            /* Suspend the thread. This is being done after the thread has exited. */
+            targetThread.suspend();
         }
-        breakpointReached = true;
-        /* Suspend the thread. This is being done after the thread has exited. */
-        thread.suspend();
     }
 
     @Override
@@ -141,7 +151,7 @@ public class SuspendAfterDeath extends TestScaffold {
 
         listenUntilVMDisconnect();
 
-        if (thread == null) {
+        if (targetThread == null) {
             failure("FAILED: never got ThreadDeath event for target thread.");
         }
         if (!breakpointReached) {
