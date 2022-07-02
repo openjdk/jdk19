@@ -57,7 +57,7 @@ public class SelfSuspendDisablerTest {
         }
     }
 
-    private static void testJvmtiThreadState(Thread thread, int expectedState) throws RuntimeException {
+    private static void testJvmtiThreadState(Thread thread, int expectedState) {
         String kindStr = thread.isVirtual()? "virtual " : "platform";
         int state = getThreadState(thread);
 

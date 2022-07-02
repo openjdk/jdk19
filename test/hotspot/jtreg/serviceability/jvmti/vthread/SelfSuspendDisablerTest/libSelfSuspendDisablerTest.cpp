@@ -65,7 +65,7 @@ Java_SelfSuspendDisablerTest_getThreadState(JNIEnv* jni, jclass cls, jthread thr
   return state;
 }
 
-}
+} // extern "C"
 
 
 JNIEXPORT jint JNICALL
