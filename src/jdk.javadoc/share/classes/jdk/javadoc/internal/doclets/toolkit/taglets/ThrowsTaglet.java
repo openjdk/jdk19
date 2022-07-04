@@ -196,8 +196,9 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
 
     private Map<ThrowsTree, Element> expand(ThrowsTree tag, Element e, Utils utils, BaseConfiguration configuration) {
         // basically, flatmap... @throws -> @throws*
-        final Map<ThrowsTree, Element> tags = new LinkedHashMap<>(); //
-        if (tag.getDescription().stream().anyMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
+        if (tag.getDescription().stream().noneMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
+            return Map.of(tag, e);
+        } else {
             // @throws is the only tag where it currently makes sense
             // to expand {@inheritDoc} to more than one tag.
             // So we override the normal flow of inheritance for this tag only.
@@ -212,18 +213,17 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             var output = DocFinder.search(configuration, input);
             if (output.tagList.size() <= 1) {
                 // old code will doo just fine
-                tags.put(tag, e);
+                return Map.of(tag, e);
             } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
                 // error (cannot do this reliably, probably is a programmatic error)
                 // TODO: warn
-                tags.put(tag, e);
+                return Map.of(tag, e);
             } else {
+                Map<ThrowsTree, Element> tags = new LinkedHashMap<>(); //
                 output.tagList.forEach(t -> tags.put((ThrowsTree) t, output.holder));
+                return tags;
             }
-        } else {
-            tags.put(tag, e);
         }
-        return tags;
     }
 
     /**
