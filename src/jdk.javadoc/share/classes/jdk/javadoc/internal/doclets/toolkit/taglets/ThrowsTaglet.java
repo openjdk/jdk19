@@ -177,7 +177,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 result.add(writer.getThrowsHeader());
             }
 
-            final List<DocTree> tags = new ArrayList<>();
+            // basically, flatmap... @throws -> @throws*
+            final Map<DocTree, Element> tags = new LinkedHashMap<>(); //
             if (tag.getDescription().stream().anyMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
                 // @throws is the only tag where it currently makes sense
                 // to expand {@inheritDoc} to more than one tag.
@@ -193,20 +194,20 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                 var output = DocFinder.search(writer.configuration(), input);
                 if (output.tagList.size() <= 1) {
                     // old code will doo just fine
-                    tags.add(tag);
+                    tags.put(tag, e);
                 } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
                     // error (cannot do this reliably, probably is a programmatic error)
                     // TODO: warn
-                    tags.add(tag);
+                    tags.put(tag, e);
                 } else {
-                    tags.addAll(output.tagList);
+                    output.tagList.forEach(t -> tags.put(t, output.holder));
                 }
             } else {
-                tags.add(tag);
+                tags.put(tag, e);
             }
 
-            for (DocTree d : tags) {
-                result.add(writer.throwsTagOutput(e, (ThrowsTree) d, substituteType));
+            tags.forEach((t1, e1) -> {
+                result.add(writer.throwsTagOutput(e1, (ThrowsTree) t1, substituteType));
                 if (substituteType != null) {
                     documentedInThisCall.add(substituteType.toString());
                 } else {
@@ -214,7 +215,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                             ? utils.getFullyQualifiedName(te, false)
                             : excName);
                 }
-            }
+            });
         }
         alreadyDocumented.addAll(documentedInThisCall);
         return result;
