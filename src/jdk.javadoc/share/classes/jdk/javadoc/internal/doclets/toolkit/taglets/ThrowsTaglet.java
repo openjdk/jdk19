@@ -26,6 +26,7 @@
 package jdk.javadoc.internal.doclets.toolkit.taglets;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -163,41 +164,51 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         var utils = writer.configuration().utils;
         Content result = writer.getOutputInstance();
         var documentedInThisCall = new HashSet<String>();
-        for (Entry<ThrowsTree, ExecutableElement> entry : throwsTags.entrySet()) {
-            Element e = entry.getValue();
+        Map<ThrowsTree, ExecutableElement> flattenedExceptions = flatten(throwsTags, writer);
+        flattenedExceptions.forEach((ThrowsTree t, ExecutableElement e) -> {
             var ch = utils.getCommentHelper(e);
-            ThrowsTree tag = entry.getKey();
-            Element te = ch.getException(tag);
-            String excName = tag.getExceptionName().toString();
+            Element te = ch.getException(t);
+            String excName = t.getExceptionName().toString();
             TypeMirror substituteType = typeSubstitutions.get(excName);
             if (alreadyDocumented.contains(excName)
                     || (te != null && alreadyDocumented.contains(utils.getFullyQualifiedName(te, false)))
                     || (substituteType != null && alreadyDocumented.contains(substituteType.toString()))) {
-                continue;
+                return;
             }
             if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
                 result.add(writer.getThrowsHeader());
             }
-            Map<ThrowsTree, Element> tags = expand(tag, e, writer);
-            tags.forEach((t1, e1) -> {
-                result.add(writer.throwsTagOutput(e1, t1, substituteType));
-                if (substituteType != null) {
-                    documentedInThisCall.add(substituteType.toString());
-                } else {
-                    documentedInThisCall.add(te != null
-                            ? utils.getFullyQualifiedName(te, false)
-                            : excName);
-                }
-            });
-        }
+            result.add(writer.throwsTagOutput(e, t, substituteType));
+            if (substituteType != null) {
+                documentedInThisCall.add(substituteType.toString());
+            } else {
+                documentedInThisCall.add(te != null
+                        ? utils.getFullyQualifiedName(te, false)
+                        : excName);
+            }
+        });
         alreadyDocumented.addAll(documentedInThisCall);
         return result;
     }
 
-    private Map<ThrowsTree, Element> expand(ThrowsTree tag, Element e, TagletWriter writer) {
+    /*
+     * A single @throws tag from an overriding method can correspond to multiple
+     * @throws tags from an overridden method.
+     */
+    private Map<ThrowsTree, ExecutableElement> flatten(Map<ThrowsTree, ExecutableElement> throwsTags,
+                                                       TagletWriter writer) {
+        Map<ThrowsTree, ExecutableElement> result = new LinkedHashMap<>();
+        throwsTags.forEach((tag, taggedElement) -> {
+            var expandedTags = expand(tag, taggedElement, writer);
+            assert Collections.disjoint(result.entrySet(), expandedTags.entrySet());
+            result.putAll(expandedTags);
+        });
+        return result;
+    }
+
+    private Map<ThrowsTree, ExecutableElement> expand(ThrowsTree tag, ExecutableElement e, TagletWriter writer) {
         // although we could use LinkedHashMap for a single mapping too, to emphasize
-        // that the order is important, a Map.of() would do just fine
-        // basically, flatmap... @throws -> @throws*
+        // that the order is important, a Map.of() has the same properties but is shorter
         if (tag.getDescription().stream().noneMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
             return Map.of(tag, e);
         }
@@ -220,8 +231,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             // TODO: warn
             return Map.of(tag, e);
         } else {
-            Map<ThrowsTree, Element> tags = new LinkedHashMap<>(); //
-            output.tagList.forEach(t -> tags.put((ThrowsTree) t, output.holder));
+            Map<ThrowsTree, ExecutableElement> tags = new LinkedHashMap<>(); //
+            output.tagList.forEach(t -> tags.put((ThrowsTree) t, (ExecutableElement) output.holder));
             return tags;
         }
     }
