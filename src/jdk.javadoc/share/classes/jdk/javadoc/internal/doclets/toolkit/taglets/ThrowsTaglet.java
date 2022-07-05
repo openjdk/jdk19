@@ -178,7 +178,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
                 result.add(writer.getThrowsHeader());
             }
-            Map<ThrowsTree, Element> tags = expand(tag, e, utils, writer.configuration());
+            Map<ThrowsTree, Element> tags = expand(tag, e, writer);
             tags.forEach((t1, e1) -> {
                 result.add(writer.throwsTagOutput(e1, t1, substituteType));
                 if (substituteType != null) {
@@ -194,7 +194,7 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         return result;
     }
 
-    private Map<ThrowsTree, Element> expand(ThrowsTree tag, Element e, Utils utils, BaseConfiguration configuration) {
+    private Map<ThrowsTree, Element> expand(ThrowsTree tag, Element e, TagletWriter writer) {
         // although we could use LinkedHashMap for a single mapping too, to emphasize
         // that the order is important, a Map.of() would do just fine
         // basically, flatmap... @throws -> @throws*
@@ -210,8 +210,8 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         //   2.1. if inherited none or one go skip, delegate to the old code
         //   2.2. otherwise (inherited more than one tag) raise an error
         // 3. otherwise (tag does not add to it), add all tags
-        var input = new DocFinder.Input(utils, e, this, new DocFinder.DocTreeInfo(tag, e), false, true);
-        var output = DocFinder.search(configuration, input);
+        var input = new DocFinder.Input(writer.configuration().utils, e, this, new DocFinder.DocTreeInfo(tag, e), false, true);
+        var output = DocFinder.search(writer.configuration(), input);
         if (output.tagList.size() <= 1) {
             // old code will doo just fine
             return Map.of(tag, e);
