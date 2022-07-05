@@ -252,7 +252,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
                 }
             };
         } else {
-            checkRegAreaElement(layout, typeClass);
+            checkRegSaveAreaElement(layout, typeClass);
             return switch (typeClass.kind()) {
                 case STRUCT -> {
                     MemorySegment value = allocator.allocate(layout);
@@ -288,7 +288,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
         }
     }
 
-    private void checkRegAreaElement(MemoryLayout layout, TypeClass typeClass) {
+    private void checkRegSaveAreaElement(MemoryLayout layout, TypeClass typeClass) {
         long gpSize = typeClass.nIntegerRegs() * GP_SLOT_SIZE;
         long fpSize = typeClass.nVectorRegs() * FP_SLOT_SIZE;
         if (currentGPOffset() + gpSize > gpLimit
@@ -316,7 +316,7 @@ public non-sealed class SysVVaList implements VaList, Scoped {
                 preAlignStack(layout);
                 postAlignStack(layout);
             } else {
-                checkRegAreaElement(layout, typeClass);
+                checkRegSaveAreaElement(layout, typeClass);
                 currentGPOffset(currentGPOffset() + (((int) typeClass.nIntegerRegs()) * GP_SLOT_SIZE));
                 currentFPOffset(currentFPOffset() + (((int) typeClass.nVectorRegs()) * FP_SLOT_SIZE));
             }
