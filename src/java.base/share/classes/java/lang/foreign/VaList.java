@@ -84,7 +84,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this variable argument list.
-     * @throws NoSuchElementException if an <a href=VaList.hmtl#safety>out-of-bounds</a> read is detected.
+     * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
     int nextVarg(ValueLayout.OfInt layout);
 
@@ -98,7 +98,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this variable argument list.
-     * @throws NoSuchElementException if an <a href=VaList.hmtl#safety>out-of-bounds</a> read is detected.
+     * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
     long nextVarg(ValueLayout.OfLong layout);
 
@@ -112,7 +112,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this variable argument list.
-     * @throws NoSuchElementException if an <a href=VaList.hmtl#safety>out-of-bounds</a> read is detected.
+     * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
     double nextVarg(ValueLayout.OfDouble layout);
 
@@ -126,7 +126,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this variable argument list.
-     * @throws NoSuchElementException if an <a href=VaList.hmtl#safety>out-of-bounds</a> read is detected.
+     * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
     MemoryAddress nextVarg(ValueLayout.OfAddress layout);
 
@@ -149,7 +149,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this variable argument list.
-     * @throws NoSuchElementException if an <a href=VaList.hmtl#safety>out-of-bounds</a> read is detected.
+     * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
     MemorySegment nextVarg(GroupLayout layout, SegmentAllocator allocator);
 
@@ -161,7 +161,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * {@linkplain MemorySession#isAlive() alive}.
      * @throws WrongThreadException if this method is called from a thread other than the thread owning
      * the {@linkplain #session() session} associated with this variable argument list.
-     * @throws NoSuchElementException if an <a href=VaList.hmtl#safety>out-of-bounds</a> read is detected.
+     * @throws NoSuchElementException if an <a href=VaList.html#safety>out-of-bounds</a> read is detected.
      */
     void skip(MemoryLayout... layouts);
 
@@ -201,7 +201,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * the JVM or, worse, silently result in memory corruption. Thus, clients should refrain from depending on
      * restricted methods, and use safe and supported functionalities, where possible.
      *
-     * @implNote variable argument lists created using this method can not detect <a href=VaList.hmtl#safety>out-of-bounds</a> reads.
+     * @implNote variable argument lists created using this method can not detect <a href=VaList.html#safety>out-of-bounds</a> reads.
      *
      * @param address a memory address pointing to an existing variable argument list.
      * @param session the memory session to be associated with the returned variable argument list.
@@ -232,7 +232,7 @@ sealed public interface VaList extends Addressable permits WinVaList, SysVVaList
      * Note that when there are no elements added to the created va list,
      * this method will return the same as {@link #empty()}.
      *
-     * @implNote variable argument lists created using this method can detect <a href=VaList.hmtl#safety>out-of-bounds</a> reads.
+     * @implNote variable argument lists created using this method can detect <a href=VaList.html#safety>out-of-bounds</a> reads.
      *
      * @param actions a consumer for a builder (see {@link Builder}) which can be used to specify the elements
      *                of the underlying variable argument list.
