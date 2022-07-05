@@ -469,7 +469,7 @@ public class TestOneToMany extends JavadocTester {
                     /**
                      * @throws MyRuntimeException sometimes
                      * @throws MyRuntimeException rarely
-                     * @throws MyRuntimeException {@inheritDoc}
+                     * @throws MyRuntimeException "{@inheritDoc}"
                      */
                     @Override
                     void m();
@@ -507,7 +507,7 @@ public class TestOneToMany extends JavadocTester {
                 <dt>Throws:</dt>
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - sometimes</dd>
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - rarely</dd>
-                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - always</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - "always"</dd>
                 </dl>""");
         checkOutput("x/I2.html", true, """
                 <dl class="notes">
@@ -519,8 +519,49 @@ public class TestOneToMany extends JavadocTester {
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - occasionally</dd>
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - sometimes</dd>
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - rarely</dd>
-                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - always</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - "always"</dd>
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - frequently</dd>
                 </dl>""");
+    }
+
+    @Test
+    public void testError(Path base) throws Exception {
+        var src = base.resolve("src");
+        tb.writeJavaFiles(src, """
+                package x;
+
+                public class MyRuntimeException extends RuntimeException { }
+                """, """
+                package x;
+
+                public interface I {
+
+                    /**
+                     * @throws MyRuntimeException sometimes
+                     * @throws MyRuntimeException rarely
+                     */
+                    void m();
+                }
+                """, """
+                package x;
+
+                public interface I1 extends I {
+
+                    /**
+                     * @throws MyRuntimeException "{@inheritDoc}"
+                     */
+                    @Override
+                    void m();
+                }
+                """);
+        javadoc("-d", base.resolve("out").toString(),
+                "-sourcepath", src.toString(),
+                "x");
+        checkExit(Exit.ERROR);
+        checkOutput(Output.OUT, true, """
+                I1.java:6: error: @inheritDoc cannot be used within this tag
+                     * @throws MyRuntimeException "{@inheritDoc}"
+                       ^
+                       """);
     }
 }

@@ -206,11 +206,11 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
                                                       ExecutableElement e,
                                                       TagletWriter writer) {
 
-        // This method uses Map.of() for a single mapping.
-        // While the result of Map.of is effectively ordered,
-        // it makes for more compact code than that of LinkedHashMap.
+        // This method uses Map.of() to create maps of size zero and one.
+        // While such maps are effectively ordered, the syntax is more
+        // compact than that of LinkedHashMap.
 
-        // Peek into @throws description
+        // peek into @throws description
         if (tag.getDescription().stream().noneMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
             // nothing to inherit
             return Map.of(tag, e);
@@ -218,15 +218,15 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         var input = new DocFinder.Input(writer.configuration().utils, e, this, new DocFinder.DocTreeInfo(tag, e), false, true);
         var output = DocFinder.search(writer.configuration(), input);
         if (output.tagList.size() <= 1) {
-            // outer code will handle that trivial case of inheritance
+            // outer code will handle this trivial case of inheritance
             return Map.of(tag, e);
         }
         if (tag.getDescription().size() > 1) {
             // there's more to description than just {@inheritDoc}
-            // it's likely a documentation error; drop anything
-            // but the inherited part and
-            // TODO warn the user
-            return Map.of(tag, e);
+            // it's likely a documentation error
+            var ch = writer.configuration().utils.getCommentHelper(e);
+            writer.configuration().getMessages().error(ch.getDocTreePath(tag), "doclet.inheritDocWithinInappropriateTag");
+            return Map.of();
         }
         Map<ThrowsTree, ExecutableElement> tags = new LinkedHashMap<>();
         output.tagList.forEach(t -> tags.put((ThrowsTree) t, (ExecutableElement) output.holder));
