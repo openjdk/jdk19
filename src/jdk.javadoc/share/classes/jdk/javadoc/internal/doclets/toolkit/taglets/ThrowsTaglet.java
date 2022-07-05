@@ -48,8 +48,10 @@ import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.ThrowsTree;
 
 import jdk.javadoc.doclet.Taglet.Location;
+import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFinder;
+import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 /**
  * A taglet that processes {@link ThrowsTree}, which represents
@@ -176,38 +178,9 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
             if (alreadyDocumented.isEmpty() && documentedInThisCall.isEmpty()) {
                 result.add(writer.getThrowsHeader());
             }
-
-            // basically, flatmap... @throws -> @throws*
-            final Map<DocTree, Element> tags = new LinkedHashMap<>(); //
-            if (tag.getDescription().stream().anyMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
-                // @throws is the only tag where it currently makes sense
-                // to expand {@inheritDoc} to more than one tag.
-                // So we override the normal flow of inheritance for this tag only.
-                // Here's what we do if @throws has {@inheritDoc} inside it:
-                // 1. try to inherit
-                // 2. if tag.getDescription() adds to it, then:
-                //   2.1. if inherited none or one go skip, delegate to the old code
-                //   2.2. otherwise (inherited more than one tag) raise an error
-                // 3. otherwise (tag does not add to it), add all tags
-                var input = new DocFinder.Input(utils, e, this,
-                        new DocFinder.DocTreeInfo(tag, e), false, true);
-                var output = DocFinder.search(writer.configuration(), input);
-                if (output.tagList.size() <= 1) {
-                    // old code will doo just fine
-                    tags.put(tag, e);
-                } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
-                    // error (cannot do this reliably, probably is a programmatic error)
-                    // TODO: warn
-                    tags.put(tag, e);
-                } else {
-                    output.tagList.forEach(t -> tags.put(t, output.holder));
-                }
-            } else {
-                tags.put(tag, e);
-            }
-
+            Map<ThrowsTree, Element> tags = expand(tag, e, utils, writer.configuration());
             tags.forEach((t1, e1) -> {
-                result.add(writer.throwsTagOutput(e1, (ThrowsTree) t1, substituteType));
+                result.add(writer.throwsTagOutput(e1, t1, substituteType));
                 if (substituteType != null) {
                     documentedInThisCall.add(substituteType.toString());
                 } else {
@@ -219,6 +192,38 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
         }
         alreadyDocumented.addAll(documentedInThisCall);
         return result;
+    }
+
+    private Map<ThrowsTree, Element> expand(ThrowsTree tag, Element e, Utils utils, BaseConfiguration configuration) {
+        // basically, flatmap... @throws -> @throws*
+        final Map<ThrowsTree, Element> tags = new LinkedHashMap<>(); //
+        if (tag.getDescription().stream().anyMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
+            // @throws is the only tag where it currently makes sense
+            // to expand {@inheritDoc} to more than one tag.
+            // So we override the normal flow of inheritance for this tag only.
+            // Here's what we do if @throws has {@inheritDoc} inside it:
+            // 1. try to inherit
+            // 2. if tag.getDescription() adds to it, then:
+            //   2.1. if inherited none or one go skip, delegate to the old code
+            //   2.2. otherwise (inherited more than one tag) raise an error
+            // 3. otherwise (tag does not add to it), add all tags
+            var input = new DocFinder.Input(utils, e, this,
+                    new DocFinder.DocTreeInfo(tag, e), false, true);
+            var output = DocFinder.search(configuration, input);
+            if (output.tagList.size() <= 1) {
+                // old code will doo just fine
+                tags.put(tag, e);
+            } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
+                // error (cannot do this reliably, probably is a programmatic error)
+                // TODO: warn
+                tags.put(tag, e);
+            } else {
+                output.tagList.forEach(t -> tags.put((ThrowsTree) t, output.holder));
+            }
+        } else {
+            tags.put(tag, e);
+        }
+        return tags;
     }
 
     /**
