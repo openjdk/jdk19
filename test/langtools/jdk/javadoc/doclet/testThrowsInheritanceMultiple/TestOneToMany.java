@@ -443,4 +443,84 @@ public class TestOneToMany extends JavadocTester {
                 <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - if that</dd>
                 </dl>""");
     }
+
+    @Test
+    public void testWholeShebang(Path base) throws Exception {
+        var src = base.resolve("src");
+        tb.writeJavaFiles(src, """
+                package x;
+
+                public class MyRuntimeException extends RuntimeException { }
+                """, """
+                package x;
+
+                public interface I {
+
+                    /**
+                     * @throws MyRuntimeException always
+                     */
+                    void m();
+                }
+                """, """
+                package x;
+
+                public interface I1 extends I {
+
+                    /**
+                     * @throws MyRuntimeException sometimes
+                     * @throws MyRuntimeException rarely
+                     * @throws MyRuntimeException {@inheritDoc}
+                     */
+                    @Override
+                    void m();
+                }
+                """, """
+                package x;
+
+                public interface I2 extends I1 {
+
+                    /**
+                     * @throws MyRuntimeException occasionally
+                     * @throws MyRuntimeException {@inheritDoc}
+                     * @throws MyRuntimeException frequently
+                     */
+                    @Override
+                    void m() throws MyRuntimeException,
+                                    MyRuntimeException,
+                                    MyRuntimeException,
+                                    MyRuntimeException;
+                }
+                """);
+        javadoc("-d", base.resolve("out").toString(),
+                "-sourcepath", src.toString(),
+                "x");
+        checkExit(Exit.OK);
+        checkOutput("x/I.html", true, """
+                <dl class="notes">
+                <dt>Throws:</dt>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - always</dd>
+                </dl>""");
+        checkOutput("x/I1.html", true, """
+                <dl class="notes">
+                <dt>Specified by:</dt>
+                <dd><code><a href="I.html#m()">m</a></code>&nbsp;in interface&nbsp;<code><a href="I.html" title="interface in x">I</a></code></dd>
+                <dt>Throws:</dt>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - sometimes</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - rarely</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - always</dd>
+                </dl>""");
+        checkOutput("x/I2.html", true, """
+                <dl class="notes">
+                <dt>Specified by:</dt>
+                <dd><code><a href="I.html#m()">m</a></code>&nbsp;in interface&nbsp;<code><a href="I.html" title="interface in x">I</a></code></dd>
+                <dt>Specified by:</dt>
+                <dd><code><a href="I1.html#m()">m</a></code>&nbsp;in interface&nbsp;<code><a href="I1.html" title="interface in x">I1</a></code></dd>
+                <dt>Throws:</dt>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - occasionally</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - sometimes</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - rarely</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - always</dd>
+                <dd><code><a href="MyRuntimeException.html" title="class in x">MyRuntimeException</a></code> - frequently</dd>
+                </dl>""");
+    }
 }
