@@ -195,34 +195,34 @@ public class ThrowsTaglet extends BaseTaglet implements InheritableTaglet {
     }
 
     private Map<ThrowsTree, Element> expand(ThrowsTree tag, Element e, Utils utils, BaseConfiguration configuration) {
+        // although we could use LinkedHashMap for a single mapping too, to emphasize
+        // that the order is important, a Map.of() would do just fine
         // basically, flatmap... @throws -> @throws*
         if (tag.getDescription().stream().noneMatch(d -> d.getKind() == DocTree.Kind.INHERIT_DOC)) {
             return Map.of(tag, e);
+        }
+        // @throws is the only tag where it currently makes sense
+        // to expand {@inheritDoc} to more than one tag.
+        // So we override the normal flow of inheritance for this tag only.
+        // Here's what we do if @throws has {@inheritDoc} inside it:
+        // 1. try to inherit
+        // 2. if tag.getDescription() adds to it, then:
+        //   2.1. if inherited none or one go skip, delegate to the old code
+        //   2.2. otherwise (inherited more than one tag) raise an error
+        // 3. otherwise (tag does not add to it), add all tags
+        var input = new DocFinder.Input(utils, e, this, new DocFinder.DocTreeInfo(tag, e), false, true);
+        var output = DocFinder.search(configuration, input);
+        if (output.tagList.size() <= 1) {
+            // old code will doo just fine
+            return Map.of(tag, e);
+        } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
+            // error (cannot do this reliably, probably is a programmatic error)
+            // TODO: warn
+            return Map.of(tag, e);
         } else {
-            // @throws is the only tag where it currently makes sense
-            // to expand {@inheritDoc} to more than one tag.
-            // So we override the normal flow of inheritance for this tag only.
-            // Here's what we do if @throws has {@inheritDoc} inside it:
-            // 1. try to inherit
-            // 2. if tag.getDescription() adds to it, then:
-            //   2.1. if inherited none or one go skip, delegate to the old code
-            //   2.2. otherwise (inherited more than one tag) raise an error
-            // 3. otherwise (tag does not add to it), add all tags
-            var input = new DocFinder.Input(utils, e, this,
-                    new DocFinder.DocTreeInfo(tag, e), false, true);
-            var output = DocFinder.search(configuration, input);
-            if (output.tagList.size() <= 1) {
-                // old code will doo just fine
-                return Map.of(tag, e);
-            } else if (tag.getDescription().size() > 1) { // there's more inside @throws than just {@inheritDoc}
-                // error (cannot do this reliably, probably is a programmatic error)
-                // TODO: warn
-                return Map.of(tag, e);
-            } else {
-                Map<ThrowsTree, Element> tags = new LinkedHashMap<>(); //
-                output.tagList.forEach(t -> tags.put((ThrowsTree) t, output.holder));
-                return tags;
-            }
+            Map<ThrowsTree, Element> tags = new LinkedHashMap<>(); //
+            output.tagList.forEach(t -> tags.put((ThrowsTree) t, output.holder));
+            return tags;
         }
     }
 
