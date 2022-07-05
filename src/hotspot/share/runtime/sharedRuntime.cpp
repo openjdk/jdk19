@@ -1346,6 +1346,9 @@ bool SharedRuntime::resolve_sub_helper_internal(methodHandle callee_method, cons
           return true; // skip patching for JVMCI
         }
         CompiledStaticCall* ssc = caller_nm->compiledStaticCall_before(caller_frame.pc());
+        if (is_nmethod && caller_nm->method()->is_continuation_enter_intrinsic()) {
+          ssc->compute_entry_for_continuation_entry(callee_method, static_call_info);
+        }
         if (ssc->is_clean()) ssc->set(static_call_info);
       }
     }
@@ -1579,6 +1582,10 @@ JRT_BLOCK_ENTRY(address, SharedRuntime::resolve_static_call_C(JavaThread* curren
     // enterSpecial is compiled and calls this method to resolve the call to Continuation::enter
     // but in interp_only_mode we need to go to the interpreted entry
     // The c2i won't patch in this mode -- see fixup_callers_callsite
+    //
+    // This should probably be done in all cases, not just enterSpecial (see JDK-8218403),
+    // but that's part of a larger fix, and the situation is worse for enterSpecial, as it has no
+    // interpreted version.
     return callee_method->get_c2i_entry();
   }
 
@@ -2009,16 +2016,11 @@ JRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address cal
   CompiledMethod* nm = cb->as_compiled_method_or_null();
   assert(nm, "must be");
 
-  // Don't patch Continuation.enterSpecial if in interp_only mode.
-  // It's possible that another thread that isn't interp_only will patch enterSpecial,
-  // but we'll worry about that another time.
-  if (nm->method()->is_continuation_enter_intrinsic()) {
-    if (JavaThread::current()->is_interp_only_mode())
-      return;
-  }
-
   // Get the return PC for the passed caller PC.
   address return_pc = caller_pc + frame::pc_return_offset;
+
+  assert(!JavaThread::current()->is_interp_only_mode() || !nm->method()->is_continuation_enter_intrinsic()
+    || ContinuationEntry::is_interpreted_call(return_pc), "interp_only_mode but not in enterSpecial interpreted entry");
 
   // There is a benign race here. We could be attempting to patch to a compiled
   // entry point at the same time the callee is being deoptimized. If that is
@@ -2055,6 +2057,13 @@ JRT_LEAF(void, SharedRuntime::fixup_callers_callsite(Method* method, address cal
            typ != relocInfo::opt_virtual_call_type &&
            typ != relocInfo::static_stub_type) {
         return;
+      }
+      if (nm->method()->is_continuation_enter_intrinsic()) {
+        assert(ContinuationEntry::is_interpreted_call(call->instruction_address()) == JavaThread::current()->is_interp_only_mode(),
+          "mode: %d", JavaThread::current()->is_interp_only_mode());
+        if (ContinuationEntry::is_interpreted_call(call->instruction_address())) {
+          return;
+        }
       }
       address destination = call->destination();
       if (should_fixup_call_destination(destination, entry_point, caller_pc, moop, cb)) {
@@ -3085,7 +3094,7 @@ void AdapterHandlerLibrary::create_native_wrapper(const methodHandle& method) {
       CodeBuffer buffer(buf);
 
       if (method->is_continuation_enter_intrinsic()) {
-        buffer.initialize_stubs_size(64);
+        buffer.initialize_stubs_size(128);
       }
 
       struct { double data[20]; } locs_buf;
