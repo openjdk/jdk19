@@ -205,7 +205,7 @@ public abstract non-sealed class AbstractMemorySegmentImpl implements MemorySegm
                 size = (int) remaining;
                 lastSubRange = true;
             }
-            i = SCOPED_MEMORY_ACCESS.vectorizedMismatch(aSession.baseSession(), bSession.baseSession(),
+            i = SCOPED_MEMORY_ACCESS.vectorizedMismatch(aSession, bSession,
                     a, aOffset + off,
                     b, bOffset + off,
                     size, ArraysSupport.LOG2_ARRAY_BYTE_INDEX_SCALE);

@@ -135,25 +135,19 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
         return MemorySegment.allocateNative(bytesSize, bytesAlignment, this);
     }
 
-    public MemorySessionImpl baseSession() {
-        return this;
-    }
-
     public abstract void release0();
 
     public abstract void acquire0();
 
     @Override
     public final boolean equals(Object o) {
-        return (o instanceof MemorySessionImpl other) &&
-                baseSession() == other.baseSession();
+        return (o instanceof MemorySession other) &&
+            toSessionImpl(other) == this;
     }
 
     @Override
     public final int hashCode() {
-        MemorySessionImpl base = baseSession();
-        return (base != this) ?
-                base.hashCode() : super.hashCode();
+        return super.hashCode();
     }
 
     @Override
@@ -187,6 +181,12 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
     public MemorySession asNonCloseable() {
         return isCloseable() ?
                 new NonCloseableView(this) : this;
+    }
+
+    @ForceInline
+    public static MemorySessionImpl toSessionImpl(MemorySession session) {
+        return session instanceof MemorySessionImpl sessionImpl ?
+                sessionImpl : ((NonCloseableView)session).session;
     }
 
     /**
@@ -341,42 +341,11 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
      * a strong reference to the original session, so even if the original session is dropped by the client
      * it would still be reachable by the GC, which is important if the session is implicitly closed.
      */
-    public final static class NonCloseableView extends MemorySessionImpl {
+    public final static class NonCloseableView implements MemorySession {
         final MemorySessionImpl session;
 
         public NonCloseableView(MemorySessionImpl session) {
-            super(session.owner, null, null);
             this.session = session;
-        }
-
-        @Override
-        public MemorySessionImpl baseSession() {
-            return session;
-        }
-
-        @Override
-        void addInternal(ResourceList.ResourceCleanup resource) {
-            session.addInternal(resource);
-        }
-
-        @Override
-        public void release0() {
-            session.release0();
-        }
-
-        @Override
-        public void acquire0() {
-            session.acquire0();
-        }
-
-        @Override
-        public boolean isCloseable() {
-            return false;
-        }
-
-        @Override
-        public void justClose() {
-            throw nonCloseable();
         }
 
         @Override
@@ -385,16 +354,43 @@ public abstract non-sealed class MemorySessionImpl implements MemorySession, Seg
         }
 
         @Override
-        public void checkValidStateRaw() {
-            // We should never call checkValidStateRaw on a non-closeable view; that method should always be
-            // called on the "base" session associated with the non-closeable view. Failure to do that
-            // will result in use-after-free issues with ScopedMemoryAccess.
-            throw new IllegalStateException("We should not get here!");
+        public boolean isCloseable() {
+            return false;
         }
 
         @Override
-        public void checkValidState() {
-            session.checkValidState();
+        public Thread ownerThread() {
+            return session.ownerThread();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return session.equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return session.hashCode();
+        }
+
+        @Override
+        public void whileAlive(Runnable action) {
+            session.whileAlive(action);
+        }
+
+        @Override
+        public MemorySession asNonCloseable() {
+            return this;
+        }
+
+        @Override
+        public void addCloseAction(Runnable runnable) {
+            session.addCloseAction(runnable);
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException();
         }
     }
 

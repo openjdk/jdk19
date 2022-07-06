@@ -28,6 +28,7 @@ package java.nio;
 import jdk.internal.access.JavaNioAccess;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.foreign.UnmapperProxy;
+import jdk.internal.foreign.AbstractMemorySegmentImpl;
 import jdk.internal.foreign.MemorySessionImpl;
 import jdk.internal.misc.ScopedMemoryAccess;
 import jdk.internal.misc.Unsafe;
@@ -760,7 +761,7 @@ public abstract sealed class Buffer
     @ForceInline
     final MemorySessionImpl session() {
         if (segment != null) {
-            return ((MemorySessionImpl)segment.session()).baseSession();
+            return ((AbstractMemorySegmentImpl)segment).sessionImpl();
         } else {
             return null;
         }

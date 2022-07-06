@@ -32,7 +32,7 @@ import java.lang.foreign.MemorySession;
 public interface Scoped {
     @ForceInline
     default MemorySessionImpl sessionImpl() {
-        return ((MemorySessionImpl)session()).baseSession();
+        return MemorySessionImpl.toSessionImpl(session());
     }
     MemorySession session();
 }
