@@ -204,23 +204,6 @@ public class TestSegmentAllocators {
         assertEquals(calls.get(), 1);
     }
 
-    @DataProvider
-    public Object[][] invalidStrings() {
-        return new Object[][] {
-                { "\0\0\0\0" },
-                { "ab\0d" }
-        };
-    }
-
-    @Test(dataProvider = "invalidStrings",
-            expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = ".*String contains zero byte.*")
-    public void testInvalidStrings(String invalid) {
-        try (MemorySession session = MemorySession.openConfined()) {
-            session.allocateUtf8String(invalid); // should fail
-        }
-    }
-
 
     @Test(dataProvider = "arrayAllocations")
     public <Z> void testArray(AllocationFactory allocationFactory, ValueLayout layout, AllocationFunction<Object, ValueLayout> allocationFunction, ToArrayHelper<Z> arrayHelper) {

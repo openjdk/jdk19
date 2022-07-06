@@ -76,7 +76,6 @@ public interface SegmentAllocator {
      * into a new memory segment obtained by calling {@code this.allocate(str.length() + 1)}.
      * @param str the Java string to be converted into a C string.
      * @return a new native memory segment containing the converted C string.
-     * @throws IllegalArgumentException if the UTF-8 encoded bytes of the given string contain a {@code 0} byte.
      */
     default MemorySegment allocateUtf8String(String str) {
         Objects.requireNonNull(str);

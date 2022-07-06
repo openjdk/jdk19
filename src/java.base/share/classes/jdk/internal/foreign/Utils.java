@@ -35,7 +35,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.invoke.VarHandle;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -140,15 +139,15 @@ public final class Utils {
         return b ? (byte)1 : (byte)0;
     }
 
+    public static void copy(MemorySegment addr, byte[] bytes) {
+        var heapSegment = MemorySegment.ofArray(bytes);
+        addr.copyFrom(heapSegment);
+        addr.set(JAVA_BYTE, bytes.length, (byte)0);
+    }
+
     public static MemorySegment toCString(byte[] bytes, SegmentAllocator allocator) {
         MemorySegment addr = allocator.allocate(bytes.length + 1);
-        for (int i = 0; i < bytes.length; i++) {
-            byte b = bytes[i];
-            if (b == 0) {
-                throw new IllegalArgumentException("String contains zero byte: " + Arrays.toString(bytes));
-            }
-            addr.set(JAVA_BYTE, i, b);
-        }
+        copy(addr, bytes);
         return addr;
     }
 
