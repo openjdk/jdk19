@@ -1047,7 +1047,7 @@ static void gen_continuation_enter(MacroAssembler* masm,
     stack_slots = 2; // will be adjusted in setup
     OopMap* map = continuation_enter_setup(masm, stack_slots);
     // The frame is complete here, but we only record it for the compiled entry, so the frame would appear unsafe,
-    // but that's okay because at the very worst we'll miss an async sample, but we're in interp_only_mode anyeay.
+    // but that's okay because at the very worst we'll miss an async sample, but we're in interp_only_mode anyway.
 
     fill_continuation_entry(masm);
 
@@ -1219,7 +1219,6 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     int stack_slots = 0;
     OopMapSet* oop_maps =  new OopMapSet();
     int interpreted_entry_offset = -1;
-    int compiled_entry_offset = -1;
     gen_continuation_enter(masm,
                          method,
                          in_sig_bt,
