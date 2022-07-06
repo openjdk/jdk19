@@ -27,6 +27,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import jdk.internal.access.JavaNioAccess;
@@ -43,7 +44,7 @@ import jdk.internal.vm.annotation.ForceInline;
  * the field type storing the 'base' coordinate is just Object; similarly, all the constructor in the subclasses
  * accept an Object 'base' parameter instead of a sharper type (e.g. {@code byte[]}). This is deliberate, as
  * using sharper types would require use of type-conversions, which in turn would inhibit some C2 optimizations,
- * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, MemorySessionImpl)}.
+ * such as the elimination of store barriers in methods like {@link HeapMemorySegmentImpl#dup(long, long, int, MemorySession)}.
  */
 public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
 
@@ -71,7 +72,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    abstract HeapMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl session);
+    abstract HeapMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session);
 
     @Override
     ByteBuffer makeByteBuffer() {
@@ -91,7 +92,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfByte dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfByte dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfByte(this.offset + offset, base, size, readOnly);
         }
 
@@ -119,7 +120,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfChar dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfChar dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfChar(this.offset + offset, base, size, readOnly);
         }
 
@@ -147,7 +148,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfShort dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfShort dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfShort(this.offset + offset, base, size, readOnly);
         }
 
@@ -175,7 +176,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfInt dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfInt dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfInt(this.offset + offset, base, size, readOnly);
         }
 
@@ -203,7 +204,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfLong dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfLong dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfLong(this.offset + offset, base, size, readOnly);
         }
 
@@ -231,7 +232,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfFloat dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfFloat dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfFloat(this.offset + offset, base, size, readOnly);
         }
 
@@ -259,7 +260,7 @@ public abstract class HeapMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        OfDouble dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        OfDouble dup(long offset, long size, boolean readOnly, MemorySession session) {
             return new OfDouble(this.offset + offset, base, size, readOnly);
         }
 

@@ -441,7 +441,7 @@ public class SharedUtils {
         }
 
         @Override
-        public MemorySessionImpl session() {
+        public MemorySession session() {
             return MemorySessionImpl.GLOBAL;
         }
 

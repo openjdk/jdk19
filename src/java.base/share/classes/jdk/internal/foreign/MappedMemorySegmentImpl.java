@@ -26,6 +26,7 @@
 package jdk.internal.foreign;
 
 import java.lang.foreign.MemorySegment;
+import java.lang.foreign.MemorySession;
 import java.nio.ByteBuffer;
 import jdk.internal.access.foreign.UnmapperProxy;
 import jdk.internal.misc.ScopedMemoryAccess;
@@ -42,7 +43,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
 
     static ScopedMemoryAccess SCOPED_MEMORY_ACCESS = ScopedMemoryAccess.getScopedMemoryAccess();
 
-    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean readOnly, MemorySessionImpl session) {
+    public MappedMemorySegmentImpl(long min, UnmapperProxy unmapper, long length, boolean readOnly, MemorySession session) {
         super(min, length, readOnly, session);
         this.unmapper = unmapper;
     }
@@ -54,7 +55,7 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     @Override
-    MappedMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+    MappedMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
         return new MappedMemorySegmentImpl(min + offset, unmapper, size, readOnly, session);
     }
 
@@ -77,19 +78,19 @@ public class MappedMemorySegmentImpl extends NativeMemorySegmentImpl {
     }
 
     public void load() {
-        SCOPED_MEMORY_ACCESS.load(session.baseSession(), min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.load(sessionImpl(), min, unmapper.isSync(), length);
     }
 
     public void unload() {
-        SCOPED_MEMORY_ACCESS.unload(session.baseSession(), min, unmapper.isSync(), length);
+        SCOPED_MEMORY_ACCESS.unload(sessionImpl(), min, unmapper.isSync(), length);
     }
 
     public boolean isLoaded() {
-        return SCOPED_MEMORY_ACCESS.isLoaded(session.baseSession(), min, unmapper.isSync(), length);
+        return SCOPED_MEMORY_ACCESS.isLoaded(sessionImpl(), min, unmapper.isSync(), length);
     }
 
     public void force() {
-        SCOPED_MEMORY_ACCESS.force(session.baseSession(), unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
+        SCOPED_MEMORY_ACCESS.force(sessionImpl(), unmapper.fileDescriptor(), min, unmapper.isSync(), 0, length);
     }
 
     public static class EmptyMappedMemorySegmentImpl extends MappedMemorySegmentImpl {

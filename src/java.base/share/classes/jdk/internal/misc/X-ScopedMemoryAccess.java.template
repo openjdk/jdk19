@@ -336,7 +336,7 @@ public class ScopedMemoryAccess {
 
         try {
             return loadFromMemorySegmentScopedInternal(
-                    msp.session(),
+                    msp.sessionImpl(),
                     vmClass, e, length,
                     msp, offset,
                     s,
@@ -381,7 +381,7 @@ public class ScopedMemoryAccess {
 
         try {
             return loadFromMemorySegmentMaskedScopedInternal(
-                    msp.session(),
+                    msp.sessionImpl(),
                     vmClass, maskClass, e, length,
                     msp, offset, m,
                     s, offsetInRange,
@@ -427,7 +427,7 @@ public class ScopedMemoryAccess {
 
         try {
             storeIntoMemorySegmentScopedInternal(
-                    msp.session(),
+                    msp.sessionImpl(),
                     vmClass, e, length,
                     v,
                     msp, offset,
@@ -473,7 +473,7 @@ public class ScopedMemoryAccess {
 
         try {
             storeIntoMemorySegmentMaskedScopedInternal(
-                    msp.session(),
+                    msp.sessionImpl(),
                     vmClass, maskClass, e, length,
                     v, m,
                     msp, offset,

@@ -494,7 +494,7 @@ public class BindingSpecializer {
 
     private void emitAcquireScope() {
         emitCheckCast(Scoped.class);
-        emitInvokeInterface(Scoped.class, "session", SESSION_IMPL_DESC);
+        emitInvokeInterface(Scoped.class, "sessionImpl", SESSION_IMPL_DESC);
         Label skipAcquire = new Label();
         Label end = new Label();
 

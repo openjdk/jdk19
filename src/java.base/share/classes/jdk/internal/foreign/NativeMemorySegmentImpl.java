@@ -48,7 +48,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
         }
 
         @Override
-        NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+        NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
             throw new IllegalStateException();
         }
     };
@@ -64,7 +64,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     final long min;
 
     @ForceInline
-    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySessionImpl session) {
+    NativeMemorySegmentImpl(long min, long length, boolean readOnly, MemorySession session) {
         super(length, readOnly, session);
         this.min = min;
     }
@@ -77,7 +77,7 @@ public class NativeMemorySegmentImpl extends AbstractMemorySegmentImpl {
     }
 
     @Override
-    NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySessionImpl session) {
+    NativeMemorySegmentImpl dup(long offset, long size, boolean readOnly, MemorySession session) {
         return new NativeMemorySegmentImpl(min + offset, size, readOnly, session);
     }
 
