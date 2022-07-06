@@ -568,7 +568,7 @@ size_t JfrCheckpointManager::flush_type_set() {
     ReleaseOperation ro(_global_mspace, _global_mspace->live_list()); // current epoch list
     GlobalWriteReleaseOperation gwro(&gwo, &ro);
     process_live_list(gwro, _global_mspace); // current epoch list
-    // Do thread local list after global. Careful, the tlwo destructor writes to chunk.
+    // Do thread local list after global. Careful, the tlco destructor writes to chunk.
     ThreadLocalCheckpointOperation tlco(_chunkwriter);
     ThreadLocalWriteOperation tlwo(tlco);
     _thread_local_mspace->iterate(tlwo); // current epoch list
