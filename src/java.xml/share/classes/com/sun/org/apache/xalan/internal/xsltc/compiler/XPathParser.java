@@ -1115,6 +1115,12 @@ public class XPathParser extends lr_parser {
             _expression = expression;
             _lineNumber = lineNumber;
             Symbol s = super.parse();
+            /*
+             * While the Java CUP parser is used for parsing symbols, the error
+             * report mechanism has so far been kept within the Xalan implementation.
+             * An error, i.e. the count of operators is over the limit, is
+             * therefore handled here.
+            */
             if (isOverLimit()) {
                 int grpCount = getCount(ID_GROUP);
                 int opCount = getCount(ID_OPERATOR);

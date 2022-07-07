@@ -396,6 +396,10 @@ public abstract class lr_parser {
       }
       lastSym = s.sym;
 
+      /*
+       * Sets the overLimit status as soon as the count of operators is over the
+       * limit, which in turn triggers the XPathParser to report an error.
+      */
       if (grpLimit > 0 && grpCount > grpLimit
               || opLimit > 0 && opCount > opLimit
               || totalOpLimit > 0 && totalOpCount > totalOpLimit) {
