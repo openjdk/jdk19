@@ -114,7 +114,9 @@ public abstract class MacBaseInstallerBundler extends AbstractBundler {
     }
 
     public MacBaseInstallerBundler() {
-        appImageBundler = new MacAppBundler().setDependentTask(true);
+        appImageBundler = new MacAppBundler()
+                .setDependentTask(true).
+                setCreatePackageFile(true);
     }
 
     protected void validateAppImageAndBundeler(
@@ -137,11 +139,18 @@ public abstract class MacBaseInstallerBundler extends AbstractBundler {
                         I18N.getString(
                             "message.app-image-requires-app-name.advice"));
             }
-            if (Optional.ofNullable(
-                    SIGN_BUNDLE.fetchFrom(params)).orElse(Boolean.FALSE)) {
-                // if signing bundle with app-image, warn user if app-image
-                // is not already signed.
-                if (!(AppImageFile.load(applicationImage).isSigned())) {
+            if (AppImageFile.load(applicationImage).isSigned()) {
+                if (!Files.exists(
+                        PackageFile.getPathInAppImage(applicationImage))) {
+                    Log.info(MessageFormat.format(I18N.getString(
+                            "warning.per.user.app.image.signed"),
+                            PackageFile.getPathInAppImage(applicationImage)));
+                }
+            } else {
+                if (Optional.ofNullable(
+                        SIGN_BUNDLE.fetchFrom(params)).orElse(Boolean.FALSE)) {
+                    // if signing bundle with app-image, warn user if app-image
+                    // is not already signed.
                     Log.info(MessageFormat.format(I18N.getString(
                             "warning.unsigned.app.image"), getID()));
                 }
@@ -161,6 +170,13 @@ public abstract class MacBaseInstallerBundler extends AbstractBundler {
             appDir = appImageRoot.resolve(APP_NAME.fetchFrom(params) + ".app");
             IOUtils.copyRecursive(predefinedImage, appDir,
                     LinkOption.NOFOLLOW_LINKS);
+
+            // Create PackageFile if predefined app image is not signed
+            if (!StandardBundlerParam.isRuntimeInstaller(params) &&
+                    !AppImageFile.load(predefinedImage).isSigned()) {
+                new PackageFile(APP_NAME.fetchFrom(params)).save(
+                        ApplicationLayout.macAppImage().resolveAt(appDir));
+            }
         } else {
             appDir = appImageBundler.execute(params, appImageRoot);
         }

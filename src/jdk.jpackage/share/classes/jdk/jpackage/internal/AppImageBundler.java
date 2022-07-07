@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,6 +112,11 @@ class AppImageBundler extends AbstractBundler {
         return this;
     }
 
+    final AppImageBundler setCreatePackageFile(boolean v) {
+        createPackageFile = v;
+        return this;
+    }
+
     final AppImageBundler setAppImageSupplier(
             Function<Path, AbstractAppImageBuilder> v) {
         appImageSupplier = v;
@@ -170,6 +175,7 @@ class AppImageBundler extends AbstractBundler {
                 createRoot(params, outputDirectory);
 
         AbstractAppImageBuilder appBuilder = appImageSupplier.apply(rootDirectory);
+        appBuilder.setCreatePackageFile(createPackageFile);
         if (!hasAppImage) {
             if (!hasRuntimeImage) {
                 JLinkBundlerHelper.execute(params,
@@ -186,6 +192,7 @@ class AppImageBundler extends AbstractBundler {
     }
 
     private boolean dependentTask;
+    private boolean createPackageFile;
     private ParamsValidator paramsValidator;
     private Function<Path, AbstractAppImageBuilder> appImageSupplier;
 }

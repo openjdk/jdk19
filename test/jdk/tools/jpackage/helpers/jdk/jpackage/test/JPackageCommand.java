@@ -830,11 +830,20 @@ public final class JPackageCommand extends CommandArguments<JPackageCommand> {
     private void assertPackageFile() {
         final Path lookupPath = PackageFile.getPathInAppImage(Path.of(""));
 
-        if (isRuntime() || (isImagePackageType() && !TKit.isOSX()) ||
-                TKit.isLinux()) {
+        if (isRuntime() || isImagePackageType() || TKit.isLinux()) {
             assertFileInAppImage(lookupPath, null);
         } else {
-            assertFileInAppImage(lookupPath, lookupPath);
+            if (TKit.isOSX() && hasArgument("--app-image")) {
+                String appImage = getArgumentValue("--app-image",
+                        () -> null);
+                if (AppImageFile.load(Path.of(appImage)).isSigned()) {
+                    assertFileInAppImage(lookupPath, null);
+                } else {
+                    assertFileInAppImage(lookupPath, lookupPath);
+                }
+            } else {
+                assertFileInAppImage(lookupPath, lookupPath);
+            }
         }
     }
 

@@ -47,10 +47,15 @@ public abstract class AbstractAppImageBuilder {
 
     private final Path root;
     protected final ApplicationLayout appLayout;
+    protected boolean createPackageFile;
 
     public AbstractAppImageBuilder(Path root) {
         this.root = root;
         appLayout = ApplicationLayout.platformAppImage().resolveAt(root);
+    }
+
+    public void setCreatePackageFile(boolean v) {
+        createPackageFile = v;
     }
 
     public InputStream getResourceAsStream(String name) {
@@ -78,7 +83,7 @@ public abstract class AbstractAppImageBuilder {
         }
 
         AppImageFile.save(root, params);
-        if (Platform.isMac()) {
+        if (createPackageFile) {
             new PackageFile(APP_NAME.fetchFrom(params)).save(
                     ApplicationLayout.macAppImage().resolveAt(root));
         }
