@@ -60,6 +60,12 @@ public class TestRelativeLinks extends JavadocTester {
         // in the right places.
         checkOutput("pkg/C.html", true,
             """
+                <a href="relative-class-link.html">relative class link</a>""",
+            """
+                <a href="#class-fragment">fragment class link</a>""",
+            """
+                <a id="class-fragment">Class fragment</a>""",
+            """
                 <a href="relative-field-link.html">relative field link</a>""",
             """
                 <a href="relative-method-link.html">relative method link</a>""",
@@ -74,7 +80,11 @@ public class TestRelativeLinks extends JavadocTester {
             """
                 <a href="#package-fragment">package fragment link</a>""",
             """
-                <a id="package-fragment">Package fragment</a>""");
+                <a id="package-fragment">Package fragment</a>""",
+            """
+                <a href="relative-class-link.html">relative class link</a>""",
+            """
+                <a href="C.html#class-fragment">fragment class link</a>""");
 
         // subclass in same package
         checkOutput("pkg/D.html", true,
@@ -95,6 +105,10 @@ public class TestRelativeLinks extends JavadocTester {
 
         // INDEX PAGE
         checkOutput("index-all.html", true,
+            """
+                <a href="./pkg/relative-class-link.html">relative class link</a>""",
+            """
+                <a href="./pkg/C.html#class-fragment">fragment class link</a>""",
             """
                 <a href="./pkg/relative-field-link.html">relative field link</a>""",
             """
@@ -119,7 +133,11 @@ public class TestRelativeLinks extends JavadocTester {
             """
                 <a href="../pkg/relative-package-link.html">relative package link</a>""",
             """
-                <a href="../pkg/package-summary.html#package-fragment">package fragment link</a>""");
+                <a href="../pkg/package-summary.html#package-fragment">package fragment link</a>""",
+            """
+                <a href="../pkg/relative-class-link.html">relative class link</a>""",
+            """
+                <a href="../pkg/C.html#class-fragment">fragment class link</a>""");
 
         // CLASS_USE
         checkOutput("pkg/class-use/C.html", true,
