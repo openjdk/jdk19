@@ -4420,9 +4420,7 @@ public class Check {
                 return false;
             }
             if (existingPatternType.isPrimitive()) {
-                if (!types.isSameType(existingPatternType, currentPatternType)) {
-                    return false;
-                }
+                return types.isSameType(existingPatternType, currentPatternType);
             } else {
                 if (!types.isSubtype(currentPatternType, existingPatternType)) {
                     return false;
