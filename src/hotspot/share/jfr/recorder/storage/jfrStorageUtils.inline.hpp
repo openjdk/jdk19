@@ -94,6 +94,7 @@ template <typename Type>
 static void retired_sensitive_acquire(Type* t, Thread* thread) {
   assert(t != NULL, "invariant");
   assert(thread != nullptr, "invariant");
+  assert(thread == Thread::current(), "invariant");
   if (t->retired()) {
     return;
   }
