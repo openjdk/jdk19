@@ -22,6 +22,7 @@
  */
 
 import java.nio.file.Path;
+import jdk.jpackage.internal.ApplicationLayout;
 import jdk.jpackage.test.JPackageCommand;
 import jdk.jpackage.test.TKit;
 import jdk.jpackage.test.PackageTest;
@@ -84,11 +85,12 @@ public class SigningPackageTwoStepTest {
 
     private static void verifyAppImageInDMG(JPackageCommand cmd) {
         MacHelper.withExplodedDmg(cmd, dmgImage -> {
-            Path launcherPath = dmgImage.resolve(Path.of("Contents", "MacOS", cmd.name()));
             // We will be called with all folders in DMG since JDK-8263155, but
             // we only need to verify app.
             if (dmgImage.endsWith(cmd.name() + ".app")) {
                 boolean isSigned = cmd.hasArgument("--mac-sign");
+                Path launcherPath = ApplicationLayout.platformAppImage()
+                    .resolveAt(dmgImage).launchersDirectory().resolve(cmd.name());
                 SigningBase.verifyCodesign(launcherPath, isSigned);
                 SigningBase.verifyCodesign(dmgImage, isSigned);
                 if (isSigned) {

@@ -115,8 +115,7 @@ public abstract class MacBaseInstallerBundler extends AbstractBundler {
 
     public MacBaseInstallerBundler() {
         appImageBundler = new MacAppBundler()
-                .setDependentTask(true).
-                setCreatePackageFile(true);
+                .setDependentTask(true);
     }
 
     protected void validateAppImageAndBundeler(

@@ -112,9 +112,8 @@ class AppImageBundler extends AbstractBundler {
         return this;
     }
 
-    final AppImageBundler setCreatePackageFile(boolean v) {
-        createPackageFile = v;
-        return this;
+    final boolean isDependentTask() {
+        return dependentTask;
     }
 
     final AppImageBundler setAppImageSupplier(
@@ -175,7 +174,6 @@ class AppImageBundler extends AbstractBundler {
                 createRoot(params, outputDirectory);
 
         AbstractAppImageBuilder appBuilder = appImageSupplier.apply(rootDirectory);
-        appBuilder.setCreatePackageFile(createPackageFile);
         if (!hasAppImage) {
             if (!hasRuntimeImage) {
                 JLinkBundlerHelper.execute(params,
@@ -192,7 +190,6 @@ class AppImageBundler extends AbstractBundler {
     }
 
     private boolean dependentTask;
-    private boolean createPackageFile;
     private ParamsValidator paramsValidator;
     private Function<Path, AbstractAppImageBuilder> appImageSupplier;
 }

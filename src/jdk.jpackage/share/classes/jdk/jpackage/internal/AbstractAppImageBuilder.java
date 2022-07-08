@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2022, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,15 +47,10 @@ public abstract class AbstractAppImageBuilder {
 
     private final Path root;
     protected final ApplicationLayout appLayout;
-    protected boolean createPackageFile;
 
     public AbstractAppImageBuilder(Path root) {
         this.root = root;
         appLayout = ApplicationLayout.platformAppImage().resolveAt(root);
-    }
-
-    public void setCreatePackageFile(boolean v) {
-        createPackageFile = v;
     }
 
     public InputStream getResourceAsStream(String name) {
@@ -83,10 +78,6 @@ public abstract class AbstractAppImageBuilder {
         }
 
         AppImageFile.save(root, params);
-        if (createPackageFile) {
-            new PackageFile(APP_NAME.fetchFrom(params)).save(
-                    ApplicationLayout.macAppImage().resolveAt(root));
-        }
 
         List<String> items = APP_CONTENT.fetchFrom(params);
         for (String item : items) {
