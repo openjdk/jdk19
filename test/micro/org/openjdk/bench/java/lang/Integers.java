@@ -146,4 +146,12 @@ public class Integers {
             bh.consume(intsBig[i] << intsSmall[i]);
         }
     }
+
+    @Benchmark
+    public void reverseBytes(Blackhole bh) {
+        for (int i = 0; i < size; i++) {
+            int r = Integer.reverseBytes(intsSmall[i]);
+            bh.consume(r);
+        }
+    }
 }

@@ -141,4 +141,12 @@ public class Longs {
             bh.consume(longArrayBig[i] << longArraySmall[i]);
         }
     }
+
+    @Benchmark
+    public void reverseBytes(Blackhole bh) {
+        for (int i = 0; i < size; i++) {
+            int r = Long.reverseBytes(longArraySmall[i]);
+            bh.consume(r);
+        }
+    }
 }
