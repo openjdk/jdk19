@@ -48,7 +48,7 @@
  * @requires vm.continuations
  * @library /test/lib
  * @compile --enable-preview -source ${jdk.version} framepop02.java
- * @run main/othervm/native --enable-preview -agentlib:framepop02 framepop02 virtual
+ * @run main/othervm/native/timeout=360 --enable-preview -agentlib:framepop02 framepop02 virtual
  */
 
 public class framepop02 {
