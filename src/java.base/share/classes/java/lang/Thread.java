@@ -172,11 +172,11 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * <p> Creating a platform thread {@linkplain AccessController#getContext() captures} the
  * {@linkplain AccessControlContext caller context} to limit the {@linkplain Permission
- * permissions} of the new thread when executing code that performs {@linkplain
- * AccessController#doPrivileged(PrivilegedAction) privileged actions}. The captured
- * caller context is the new thread's "Inherited {@code AccessControlContext}". Creating
+ * permissions} of the new thread when it executes code that performs a {@linkplain
+ * AccessController#doPrivileged(PrivilegedAction) privileged action}. The captured
+ * caller context is the new thread's "Inherited {@link AccessControlContext}". Creating
  * a virtual thread does not capture the caller context; virtual threads have no
- * permissions when executing code that performs privileged actions.
+ * permissions when executing code that performs a privileged action.
  *
  * <p> Unless otherwise specified, passing a {@code null} argument to a constructor
  * or method in this class will cause a {@link NullPointerException} to be thrown.
