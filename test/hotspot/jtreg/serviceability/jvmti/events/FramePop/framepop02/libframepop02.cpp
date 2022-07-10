@@ -73,7 +73,11 @@ bool isTestThread(JNIEnv *jni, jvmtiEnv *jvmti, jthread thr) {
   jvmtiThreadInfo inf;
   const char* TEST_THREAD_NAME_BASE = "Test Thread";
   check_jvmti_status(jni, jvmti->GetThreadInfo(thr, &inf), "Error in GetThreadInfo.");
-  return strncmp(inf.name, TEST_THREAD_NAME_BASE, strlen(TEST_THREAD_NAME_BASE)) == 0;
+
+  bool result = strncmp(inf.name, TEST_THREAD_NAME_BASE, strlen(TEST_THREAD_NAME_BASE)) == 0;
+  jvmti->Deallocate((unsigned char *)inf.name);
+
+  return result;
 }
 
 static
@@ -178,7 +182,7 @@ void JNICALL MethodEntry(jvmtiEnv *jvmti, JNIEnv *jni,
     return; // not a tested thread
   }
 
-  RawMonitorLocker arml(jvmti, jni, agent_lock);
+  RawMonitorLocker rml(jvmti, jni, agent_lock);
 
   if (!callbacksEnabled) {
     return;
@@ -187,16 +191,18 @@ void JNICALL MethodEntry(jvmtiEnv *jvmti, JNIEnv *jni,
   check_jvmti_status(jni, jvmti->GetFrameCount(thr, &frameCount), "Error in GetFrameCount");
   check_jvmti_status(jni, jvmti->IsMethodNative(method, &isNative), "Error in IsMethodNative.");
 
-  if (printdump == JNI_TRUE) {
-    print_current_time();
-    fflush(0);
-    LOG(">>> %sMethod entry\n>>>", (isNative == JNI_TRUE) ? "Native " : "");
-    printInfo(jni, jvmti, thr, method, frameCount);
-  }
-  if (isNative == JNI_FALSE) {
-    RawMonitorLocker erml(jvmti, jni, event_lock);
-    push(jni, thr, method, frameCount);
-    check_jvmti_status(jni, jvmti->NotifyFramePop(thr, 0), "Error in NotifyFramePop.");
+  {
+    if (printdump == JNI_TRUE) {
+      print_current_time();
+      fflush(0);
+      LOG(">>> %sMethod entry\n>>>", (isNative == JNI_TRUE) ? "Native " : "");
+      printInfo(jni, jvmti, thr, method, frameCount);
+    }
+    if (isNative == JNI_FALSE) {
+      RawMonitorLocker rml(jvmti, jni, event_lock);
+      push(jni, thr, method, frameCount);
+      check_jvmti_status(jni, jvmti->NotifyFramePop(thr, 0), "Error in NotifyFramePop.");
+    }
   }
 }
 
@@ -215,25 +221,23 @@ void JNICALL FramePop(jvmtiEnv *jvmti, JNIEnv *jni,
                       jthread thr, jmethodID method, jboolean wasPopedByException) {
   jint frameCount;
 
-  if (!isTestThread(jni, jvmti, thr)) {
-    return; // not a tested thread
-  }
-
-  RawMonitorLocker arml(jvmti, jni, agent_lock);
+  RawMonitorLocker rml(jvmti, jni, agent_lock);
 
   if (!callbacksEnabled) {
     return;
   }
   check_jvmti_status(jni, jvmti->GetFrameCount(thr, &frameCount), "Error in GetFrameCount.");
 
-  if (printdump == JNI_TRUE) {
-    print_current_time();
-    fflush(0);
-    LOG(" >>> Frame Pop\n>>>");
-    printInfo(jni, jvmti, thr, method, frameCount);
+  { 
+    if (printdump == JNI_TRUE) {
+      print_current_time();
+      fflush(0);
+      LOG(" >>> Frame Pop\n>>>");
+      printInfo(jni, jvmti, thr, method, frameCount);
+    }
+    RawMonitorLocker rml(jvmti, jni, event_lock);
+    pop(jvmti, (JNIEnv *)jni, thr, method, frameCount);
   }
-  RawMonitorLocker erml(jvmti, jni, event_lock);
-  pop(jvmti, (JNIEnv *)jni, thr, method, frameCount);
 }
 
 JNIEXPORT jint JNICALL
