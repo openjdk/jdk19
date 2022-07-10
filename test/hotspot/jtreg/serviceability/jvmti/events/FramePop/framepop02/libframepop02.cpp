@@ -228,7 +228,7 @@ void JNICALL FramePop(jvmtiEnv *jvmti, JNIEnv *jni,
   }
   check_jvmti_status(jni, jvmti->GetFrameCount(thr, &frameCount), "Error in GetFrameCount.");
 
-  { 
+  {
     if (printdump == JNI_TRUE) {
       print_current_time();
       fflush(0);
