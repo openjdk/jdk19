@@ -160,6 +160,11 @@ public class TestSegmentAllocators {
         allocator.allocate(1, 3);
     }
 
+    @Test(dataProvider = "allocators", expectedExceptions = IllegalArgumentException.class)
+    public void testBadAllocationArrayNegSize(SegmentAllocator allocator) {
+        allocator.allocateArray(ValueLayout.JAVA_BYTE, -1);
+    }
+
     @Test
     public void testArrayAllocateDelegation() {
         AtomicInteger calls = new AtomicInteger();
