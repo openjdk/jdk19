@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, 2022 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@
  * @library ..
  * @library /test/lib
  * @build jdk.test.lib.RandomFactory
- * @run main/othervm/timeout=240 -Xmx4G LargeGatheringWrite
+ * @run main/othervm/timeout=480 -Xmx4G LargeGatheringWrite
  * @key randomness
  */
 import java.io.IOException;
