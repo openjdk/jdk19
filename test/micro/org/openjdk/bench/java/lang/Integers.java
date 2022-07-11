@@ -150,10 +150,9 @@ public class Integers {
     }
 
     @Benchmark
-    public int [] reverseBytes() {
+    public void reverseBytes() {
         for (int i = 0; i < size; i++) {
             res[i] = Integer.reverseBytes(intsSmall[i]);
         }
-        return res;
     }
 }

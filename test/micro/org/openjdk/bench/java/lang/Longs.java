@@ -145,10 +145,9 @@ public class Longs {
     }
 
     @Benchmark
-    public long [] reverseBytes() {
+    public void reverseBytes() {
         for (int i = 0; i < size; i++) {
             res[i] = Long.reverseBytes(longArraySmall[i]);
         }
-        return res;
     }
 }
