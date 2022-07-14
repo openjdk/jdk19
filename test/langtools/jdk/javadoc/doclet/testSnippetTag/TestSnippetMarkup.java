@@ -728,24 +728,26 @@ First line // @highlight :
                                String content)
             throws UncheckedIOException {
 
-        // The HTML <a> tag generated from the @link snippet markup tag is the
-        // same as that of the {@link} Standard doclet tag. This is specified
-        // and can be used for comparison and testing.
+        // The HTML A element generated for the @link snippet markup tag is
+        // the same as that for the similar Standard doclet {@link} tag.
+        // This fact can be used for comparison and testing.
 
-        // generate documentation for {@link} to grab its HTML <a> tag;
-        // generate documentation at low cost and do not interfere with the
-        // calling test state; for that, do not create file trees, do not write
-        // to std out/err, and generally try to keep everything in memory
+        // Generate documentation for {@link} to grab its HTML A element.
+        // Generate documentation cheaply and do not interfere with the
+        // calling test state; for that: do not create file trees, do not write
+        // to std out/err, and generally try to keep everything in memory.
 
         // Caveat: a label used in snippet's @link tag can start, end, or both,
         // with whitespace. In this regard, snippet's @link differs from
         // {@link} and {@linkplain} Standard doclet tags, which trim whitespace
         // from labels. In particular, {@link} and {@linkplain} treat
-        // blank labels as not set, whereas snippet's @link does not.
+        // whitespace after the reference as an absent label, whereas
+        // snippet's @link does not. To avoid whitespace problems,
+        // LABEL_PLACEHOLDER is used. It is later substituted with "content",
+        // which might be an empty or blank string.
 
-        String LABEL_PLACEHOLDER = "label";
-
-        String source = """
+        var LABEL_PLACEHOLDER = "label";
+        var source = """
                 /** {@link %s %s} */
                 public interface A { }
                 """.formatted(targetReference, LABEL_PLACEHOLDER);
