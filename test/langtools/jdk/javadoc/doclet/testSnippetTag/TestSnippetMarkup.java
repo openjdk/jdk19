@@ -190,6 +190,16 @@ public class TestSnippetMarkup extends SnippetTester {
                                 First line
                                 link(  )Secondlink( )line
                                 """, "link\\((.+?)\\)", r -> link(true, "java.lang.System#out", r.group(1)))
+                ),
+                new TestCase(
+                        """
+                                First line
+                                  Second line // @link regex=" " target="java.lang.System#in"
+                                """,
+                        replace("""
+                                First line
+                                link(  )Secondlink( )line
+                                """, "link\\((.+?)\\)", r -> link(true, "java.lang.System#in", r.group(1)))
                 )
         );
         testPositive(base, testCases);
