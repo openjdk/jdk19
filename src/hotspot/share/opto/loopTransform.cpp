@@ -1450,6 +1450,7 @@ bool PhaseIdealLoop::skeleton_predicate_has_opaque(IfNode* iff) {
   }
   assert(init == verif_init && stride == verif_stride, "missed opaque node");
 #endif
+  assert(stride == 0 || init != 0, "init should be there every time stride is");
   return init != 0;
 }
 
