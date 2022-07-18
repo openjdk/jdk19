@@ -109,7 +109,7 @@ int NativeCallingConvention::calling_convention(BasicType* sig_bt, VMRegPair* ou
       case T_BYTE:
       case T_SHORT:
       case T_INT:
-      case T_FLOAT: {
+      case T_FLOAT: if (!CCallingConventionRequiresIntsAsLongs || sig_bt[i] == T_FLOAT) {
         assert(src_pos < _input_regs.length(), "oob");
         VMReg reg = _input_regs.at(src_pos++);
         out_regs[i].set1(reg);

@@ -27,6 +27,8 @@
 #define CPU_PPC_MACROASSEMBLER_PPC_HPP
 
 #include "asm/assembler.hpp"
+#include "code/vmreg.hpp"
+#include "compiler/oopMap.hpp"
 #include "oops/accessDecorators.hpp"
 #include "runtime/rtmLocking.hpp"
 #include "utilities/macros.hpp"
@@ -415,6 +417,23 @@ class MacroAssembler: public Assembler {
   // restore TOC after call. Updates and returns _last_calls_return_pc.
   inline address call_stub(Register function_entry);
   inline void call_stub_and_return_to(Register function_entry, Register return_pc);
+
+  static int reg2slot(VMReg r);
+  static int reg2offset(VMReg r);
+
+  void object_move(int frame_size_in_slots,
+                   OopMap* oop_map, int oop_handle_offset,
+                   bool is_receiver, int* receiver_offset,
+                   VMRegPair src, VMRegPair dst,
+                   Register r_caller_sp, Register r_temp_1, Register r_temp_2);
+  void int_move(VMRegPair src, VMRegPair dst,
+                Register r_caller_sp, Register r_temp);
+  void long_move(VMRegPair src, VMRegPair dst,
+                 Register r_caller_sp, Register r_temp);
+  void float_move(VMRegPair src, VMRegPair dst,
+                  Register r_caller_sp, Register r_temp);
+  void double_move(VMRegPair src, VMRegPair dst,
+                   Register r_caller_sp, Register r_temp);
 
   //
   // Java utilities
