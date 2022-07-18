@@ -25,7 +25,7 @@
 /*
  * @test
  * @bug 8290417
- * @summary CDS cannot archive lamda proxy with useImplMethodHandle
+ * @summary CDS cannot archive lambda proxy with useImplMethodHandle
  * @requires vm.cds
  * @library /test/lib /test/hotspot/jtreg/runtime/cds/appcds /test/hotspot/jtreg/runtime/cds/appcds/test-classes
  * @build pkg1.BaseWithProtectedMethod
