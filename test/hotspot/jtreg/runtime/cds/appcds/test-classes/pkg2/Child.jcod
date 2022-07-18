@@ -56,7 +56,7 @@ rm -f test-classes/pkg2/Child.java
 // in order to trigger JDK-8290417
 //
 // Javac in JDK 17 generates a public method for accessing the protected method
-// in the base class. As a result, InnerClassLambdaMetafactory will no generate
+// in the base class. As a result, InnerClassLambdaMetafactory will not generate
 // the proxy class in useImplMethodHandle mode.
 //
 // public class pkg2.Child extends pkg1.BaseWithProtectedMethod {

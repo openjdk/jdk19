@@ -37,8 +37,6 @@
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. DynamicLambdaWithUseImplMethodHandle
  */
 
-import jdk.test.lib.cds.CDSOptions;
-import jdk.test.lib.cds.CDSTestUtils;
 import jdk.test.lib.helpers.ClassFileInstaller;
 
 public class DynamicLambdaWithUseImplMethodHandle extends DynamicArchiveTestBase {
