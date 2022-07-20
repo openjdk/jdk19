@@ -32,7 +32,8 @@ public enum CABI {
     SysV,
     Win64,
     LinuxAArch64,
-    MacOsAArch64;
+    MacOsAArch64,
+    LinuxPPC64le;
 
     private static final CABI current;
 
@@ -55,6 +56,9 @@ public enum CABI {
                 // The Linux ABI follows the standard AAPCS ABI
                 current = LinuxAArch64;
             }
+        } else if (arch.equals("ppc64le")) {
+            // 64-Bit ELF V2 ABI
+            current = LinuxPPC64le;
         } else {
             throw new UnsupportedOperationException(
                 "Unsupported os, arch, or address size: " + os + ", " + arch + ", " + addressSize);
