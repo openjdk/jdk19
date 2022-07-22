@@ -48,6 +48,8 @@ G1SegmentedArraySegment* G1SegmentedArraySegment::create_segment(uint slot_size,
 }
 
 void G1SegmentedArraySegment::delete_segment(G1SegmentedArraySegment* segment) {
+  // Wait for concurrent readers of the segment to exit before freeing.
+  GlobalCounter::write_synchronize();
   segment->~G1SegmentedArraySegment();
   FREE_C_HEAP_ARRAY(_mem_flag, segment);
 }
