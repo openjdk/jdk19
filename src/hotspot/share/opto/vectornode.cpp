@@ -1725,7 +1725,9 @@ Node* ReverseBytesVNode::Identity(PhaseGVN* phase) {
   }
   // ReverseBytesV (ReverseBytesV X , MASK) , MASK =>  X
   if (in(1)->Opcode() == Op_ReverseBytesV) {
-    if (is_predicated_vector() && in(1)->is_predicated_vector() && in(2) == in(1)->in(2)) {
+    if (is_predicated_vector() ^ in(1)->is_predicated_vector()) {
+      return this;
+    } else if (is_predicated_vector() && in(1)->is_predicated_vector() && in(2) == in(1)->in(2)) {
       return in(1)->in(1);
     } else {
       // ReverseBytesV (ReverseBytesV X) =>  X
@@ -1741,7 +1743,9 @@ Node* ReverseVNode::Identity(PhaseGVN* phase) {
   }
   // ReverseV (ReverseV X , MASK) , MASK =>  X
   if (in(1)->Opcode() == Op_ReverseV) {
-    if (is_predicated_vector() && in(1)->is_predicated_vector() && in(2) == in(1)->in(2)) {
+    if (is_predicated_vector() ^ in(1)->is_predicated_vector()) {
+      return this;
+    } else if (is_predicated_vector() && in(1)->is_predicated_vector() && in(2) == in(1)->in(2)) {
       return in(1)->in(1);
     } else {
       // ReverseV (ReverseV X) =>  X
