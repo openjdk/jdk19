@@ -122,7 +122,7 @@ import sun.security.util.SecurityConstants;
  * in this class causes a {@link NullPointerException NullPointerException} to
  * be thrown. </p>
  *
- * <h2> Example usage: </h2>
+ * <h2> Example </h2>
  *
  * <p> This example creates a configuration by resolving a module named
  * "{@code myapp}" with the configuration for the boot layer as the parent. It
