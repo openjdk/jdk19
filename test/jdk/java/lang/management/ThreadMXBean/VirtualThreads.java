@@ -108,7 +108,7 @@ public class VirtualThreads {
     }
 
     /**
-     * Test that ThreadMXBean.getThreadInfo(long) with the thread id of a carrier thread.
+     * Test ThreadMXBean.getThreadInfo(long) with the thread id of a carrier thread.
      * The stack frames of the virtual thread should not be returned.
      */
     @Test
