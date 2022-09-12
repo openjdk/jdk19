@@ -186,7 +186,8 @@ void DowncallStubGenerator::generate() {
   __ stw(tmp1, in_bytes(JavaThread::thread_state_offset()), R16_thread);
 
   __ block_comment("{ argument shuffle");
-  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), 0, _abi._shadow_space_bytes);
+  // TODO: Check if in_stk_bias is always correct (interpreter / JIT)?
+  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, _abi._shadow_space_bytes);
   if (_needs_return_buffer) {
     assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
     __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);
@@ -314,5 +315,5 @@ void DowncallStubGenerator::generate() {
   //////////////////////////////////////////////////////////////////////////////
 
   __ flush();
-  Disassembler::decode((u_char*)start, (u_char*)__ pc(), tty);
+  // Disassembler::decode((u_char*)start, (u_char*)__ pc(), tty);
 }

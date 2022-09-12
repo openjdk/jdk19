@@ -1369,7 +1369,8 @@ static void verify_oop_args(MacroAssembler* masm,
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
-          __ ld(temp_reg, __ reg2offset(r), R1_SP);
+          int out_stk_bias = SharedRuntime::out_preserve_stack_slots() * VMRegImpl::stack_slot_size;
+          __ ld(temp_reg, __ reg2offset(r, out_stk_bias), R1_SP);
           __ verify_oop(temp_reg, FILE_AND_LINE);
         } else {
           __ verify_oop(r->as_Register(), FILE_AND_LINE);
@@ -1405,12 +1406,14 @@ static void gen_special_dispatch(MacroAssembler* masm,
     fatal("unexpected intrinsic id %d", vmIntrinsics::as_int(iid));
   }
 
+  int out_stk_bias = SharedRuntime::out_preserve_stack_slots() * VMRegImpl::stack_slot_size;
+
   if (member_reg != noreg) {
     // Load the member_arg into register, if necessary.
     SharedRuntime::check_member_name_argument_is_last_argument(method, sig_bt, regs);
     VMReg r = regs[member_arg_pos].first();
     if (r->is_stack()) {
-      __ ld(member_reg, __ reg2offset(r), R1_SP);
+      __ ld(member_reg, __ reg2offset(r, out_stk_bias), R1_SP);
     } else {
       // no data motion is needed
       member_reg = r->as_Register();
@@ -1429,7 +1432,7 @@ static void gen_special_dispatch(MacroAssembler* masm,
       // platform, pick a temp and load the receiver from stack.
       fatal("receiver always in a register");
       receiver_reg = R11_scratch1;  // TODO (hs24): is R11_scratch1 really free at this point?
-      __ ld(receiver_reg, __ reg2offset(r), R1_SP);
+      __ ld(receiver_reg, __ reg2offset(r, out_stk_bias), R1_SP);
     } else {
       // no data motion is needed
       receiver_reg = r->as_Register();
@@ -1742,6 +1745,9 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     }
 #endif // ASSERT
 
+    // c_calling_convention adjusts the slots, so in_stk_bias == out_stk_bias
+    int stk_bias = SharedRuntime::out_preserve_stack_slots() * VMRegImpl::stack_slot_size;
+
     switch (in_sig_bt[in]) {
       case T_BOOLEAN:
       case T_CHAR:
@@ -1749,10 +1755,10 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
       case T_SHORT:
       case T_INT:
         // Move int and do sign extension.
-        __ int_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ int_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         break;
       case T_LONG:
-        __ long_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ long_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         break;
       case T_ARRAY:
       case T_OBJECT:
@@ -1760,20 +1766,20 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
                        oop_map, oop_handle_slot_offset,
                        ((in == 0) && (!method_is_static)), &receiver_offset,
                        in_regs[in], out_regs[out],
-                       r_callers_sp, r_temp_1, r_temp_2);
+                       r_callers_sp, r_temp_1, r_temp_2, stk_bias, stk_bias);
         break;
       case T_VOID:
         break;
       case T_FLOAT:
-        __ float_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ float_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         if (out_regs2[out].first()->is_valid()) {
-          __ float_move(in_regs[in], out_regs2[out], r_callers_sp, r_temp_1);
+          __ float_move(in_regs[in], out_regs2[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         }
         break;
       case T_DOUBLE:
-        __ double_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ double_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         if (out_regs2[out].first()->is_valid()) {
-          __ double_move(in_regs[in], out_regs2[out], r_callers_sp, r_temp_1);
+          __ double_move(in_regs[in], out_regs2[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         }
         break;
       case T_ADDRESS:

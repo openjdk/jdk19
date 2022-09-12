@@ -119,7 +119,7 @@ int NativeCallingConvention::calling_convention(BasicType* sig_bt, VMRegPair* ou
       }
       case T_LONG:
       case T_DOUBLE: {
-        assert((i + 1) < num_args && sig_bt[i + 1] == T_VOID, "expecting half");
+        assert(CCallingConventionRequiresIntsAsLongs || ((i + 1) < num_args && sig_bt[i + 1] == T_VOID), "expecting half");
         assert(src_pos < _input_regs.length(), "oob");
         VMReg reg = _input_regs.at(src_pos++);
         out_regs[i].set2(reg);

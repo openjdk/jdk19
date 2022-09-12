@@ -418,22 +418,26 @@ class MacroAssembler: public Assembler {
   inline address call_stub(Register function_entry);
   inline void call_stub_and_return_to(Register function_entry, Register return_pc);
 
-  static int reg2slot(VMReg r);
-  static int reg2offset(VMReg r);
+  static int reg2offset(VMReg r, int stk_bias);
 
   void object_move(int frame_size_in_slots,
                    OopMap* oop_map, int oop_handle_offset,
                    bool is_receiver, int* receiver_offset,
                    VMRegPair src, VMRegPair dst,
-                   Register r_caller_sp, Register r_temp_1, Register r_temp_2);
+                   Register r_caller_sp, Register r_temp_1, Register r_temp_2,
+                   int in_stk_bias, int out_stk_bias);
   void int_move(VMRegPair src, VMRegPair dst,
-                Register r_caller_sp, Register r_temp);
+                Register r_caller_sp, Register r_temp,
+                int in_stk_bias, int out_stk_bias);
   void long_move(VMRegPair src, VMRegPair dst,
-                 Register r_caller_sp, Register r_temp);
+                 Register r_caller_sp, Register r_temp,
+                 int in_stk_bias, int out_stk_bias);
   void float_move(VMRegPair src, VMRegPair dst,
-                  Register r_caller_sp, Register r_temp);
+                  Register r_caller_sp, Register r_temp,
+                  int in_stk_bias, int out_stk_bias);
   void double_move(VMRegPair src, VMRegPair dst,
-                   Register r_caller_sp, Register r_temp);
+                   Register r_caller_sp, Register r_temp,
+                   int in_stk_bias, int out_stk_bias);
 
   //
   // Java utilities

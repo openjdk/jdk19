@@ -113,7 +113,6 @@ void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) {
 }
 
 void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMReg tmp, int in_stk_bias, int out_stk_bias) const {
-  assert(in_stk_bias == 0 && out_stk_bias == frame::abi_reg_args_size, "hard coded");
   Register callerSP = tmp->as_Register();
   masm->ld(callerSP, 0, R1_SP);
   for (int i = 0; i < _moves.length(); i++) {
@@ -129,19 +128,19 @@ void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMReg tmp, int in_stk_bi
       case T_SHORT:
       case T_CHAR:
       case T_INT:
-        masm->int_move(from_vmreg, to_vmreg, callerSP, R0);
+        masm->int_move(from_vmreg, to_vmreg, callerSP, R0, in_stk_bias, out_stk_bias);
         break;
 
       case T_FLOAT:
-        masm->float_move(from_vmreg, to_vmreg, callerSP, R0);
+        masm->float_move(from_vmreg, to_vmreg, callerSP, R0, in_stk_bias, out_stk_bias);
         break;
 
       case T_DOUBLE:
-        masm->double_move(from_vmreg, to_vmreg, callerSP, R0);
+        masm->double_move(from_vmreg, to_vmreg, callerSP, R0, in_stk_bias, out_stk_bias);
         break;
 
       case T_LONG :
-        masm->long_move(from_vmreg, to_vmreg, callerSP, R0);
+        masm->long_move(from_vmreg, to_vmreg, callerSP, R0, in_stk_bias, out_stk_bias);
         break;
 
       default:
