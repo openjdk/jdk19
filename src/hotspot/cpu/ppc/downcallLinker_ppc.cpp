@@ -123,9 +123,8 @@ RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
 }
 
 void DowncallStubGenerator::generate() {
-  Register tmp1 = R11_scratch1;
-
-  Register shuffle_reg = tmp1;
+  Register tmp = R11_scratch1,
+           shuffle_reg = tmp;
   JavaCallingConvention in_conv;
   NativeCallingConvention out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg->as_VMReg());
@@ -166,24 +165,22 @@ void DowncallStubGenerator::generate() {
   allocated_frame_size = align_up(allocated_frame_size, frame::alignment_in_bytes);
   _framesize = allocated_frame_size >> LogBytesPerInt; // In 4 Byte stack slots.
 
-  _oop_maps  = new OopMapSet();
+  _oop_maps = new OopMapSet();
   address start = __ pc();
 
-  __ save_LR_CR(tmp1); // Save in old frame.
-  __ push_frame(allocated_frame_size, tmp1);
+  __ save_LR_CR(tmp); // Save in old frame.
+  __ push_frame(allocated_frame_size, tmp);
 
   _frame_complete = __ pc() - start;
 
   address the_pc = __ pc();
-  __ calculate_address_from_global_toc(tmp1, the_pc, true, true, true, true);
-  __ set_last_Java_frame(R1_SP, tmp1);
-  OopMap* map = new OopMap(_framesize, 0);
-  _oop_maps->add_gc_map(the_pc - start, map);
+  __ calculate_address_from_global_toc(tmp, the_pc, true, true, true, true);
+  __ set_last_Java_frame(R1_SP, tmp);
 
   // State transition
-  __ li(tmp1, _thread_in_native);
+  __ li(tmp, _thread_in_native);
   __ release();
-  __ stw(tmp1, in_bytes(JavaThread::thread_state_offset()), R16_thread);
+  __ stw(tmp, in_bytes(JavaThread::thread_state_offset()), R16_thread);
 
   __ block_comment("{ argument shuffle");
   // TODO: Check if in_stk_bias is always correct (interpreter / JIT)?
@@ -196,14 +193,17 @@ void DowncallStubGenerator::generate() {
 
   __ mtctr(_abi._target_addr_reg);
   __ bctrl();
+  int return_add_offs = __ pc() - start;
+  OopMap* map = new OopMap(_framesize, 0);
+  _oop_maps->add_gc_map(return_add_offs, map);
 
   if (!_needs_return_buffer) {
     // Unpack native results.
     switch (_ret_bt) {
       case T_BOOLEAN: // convert !=0 to 1
-                      __ neg(tmp1, R3_RET);
-                      __ orr(tmp1, R3_RET, tmp1);
-                      __ srwi(R3_RET, tmp1, 31);      break;
+                      __ neg(tmp, R3_RET);
+                      __ orr(tmp, R3_RET, tmp);
+                      __ srwi(R3_RET, tmp, 31);      break;
       case T_CHAR   : __ clrldi(R3_RET, R3_RET, 48);  break;
       case T_BYTE   : __ extsb(R3_RET, R3_RET);       break;
       case T_SHORT  : __ extsh(R3_RET, R3_RET);       break;
@@ -218,15 +218,15 @@ void DowncallStubGenerator::generate() {
     }
   } else {
     assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ ld(tmp1, ret_buf_addr_sp_offset, R1_SP);
+    __ ld(tmp, ret_buf_addr_sp_offset, R1_SP);
     int offset = 0;
     for (int i = 0; i < _output_registers.length(); i++) {
       VMReg reg = _output_registers.at(i);
       if (reg->is_Register()) {
-        __ std(reg->as_Register(), offset, tmp1);
+        __ std(reg->as_Register(), offset, tmp);
         offset += 8;
       } else if(reg->is_FloatRegister()) {
-        __ stfd(reg->as_FloatRegister(), offset, tmp1);
+        __ stfd(reg->as_FloatRegister(), offset, tmp);
         offset += 16;
       } else {
         ShouldNotReachHere();
@@ -235,39 +235,40 @@ void DowncallStubGenerator::generate() {
   }
 
   // State transition
-  __ li(tmp1, _thread_in_native_trans);
+  __ li(tmp, _thread_in_native_trans);
   __ release();
-  __ stw(tmp1, in_bytes(JavaThread::thread_state_offset()), R16_thread);
+  __ stw(tmp, in_bytes(JavaThread::thread_state_offset()), R16_thread);
+  // TODO: JDK 20 supports UseSystemMemoryBarrier
   __ fence(); // Order state change wrt. safepoint poll.
 
   Label L_after_safepoint_poll;
   Label L_safepoint_poll_slow_path;
 
-  __ safepoint_poll(L_safepoint_poll_slow_path, tmp1, true /* at_return */, false /* in_nmethod */);
+  __ safepoint_poll(L_safepoint_poll_slow_path, tmp, true /* at_return */, false /* in_nmethod */);
 
-  __ lwz(tmp1, in_bytes(JavaThread::suspend_flags_offset()), R16_thread);
-  __ cmpwi(CCR0, tmp1, 0);
+  __ lwz(tmp, in_bytes(JavaThread::suspend_flags_offset()), R16_thread);
+  __ cmpwi(CCR0, tmp, 0);
   __ bne(CCR0, L_safepoint_poll_slow_path);
   __ bind(L_after_safepoint_poll);
 
   // change thread state
   // State transition
-  __ li(tmp1, _thread_in_Java);
+  __ li(tmp, _thread_in_Java);
   __ lwsync(); // Acquire safepoint and suspend state, release thread state.
-  __ stw(tmp1, in_bytes(JavaThread::thread_state_offset()), R16_thread);
+  __ stw(tmp, in_bytes(JavaThread::thread_state_offset()), R16_thread);
 
   __ block_comment("reguard stack check");
   Label L_reguard;
   Label L_after_reguard;
-  __ lwz(tmp1, in_bytes(JavaThread::stack_guard_state_offset()), R16_thread);
-  __ cmpwi(CCR0, tmp1, StackOverflow::stack_guard_yellow_reserved_disabled);
+  __ lwz(tmp, in_bytes(JavaThread::stack_guard_state_offset()), R16_thread);
+  __ cmpwi(CCR0, tmp, StackOverflow::stack_guard_yellow_reserved_disabled);
   __ beq(CCR0, L_reguard);
   __ bind(L_after_reguard);
 
   __ reset_last_Java_frame();
 
   __ pop_frame();
-  __ restore_LR_CR(tmp1);
+  __ restore_LR_CR(tmp);
   __ blr();
 
   //////////////////////////////////////////////////////////////////////////////

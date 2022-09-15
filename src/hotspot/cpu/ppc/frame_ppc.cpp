@@ -205,13 +205,17 @@ frame frame::sender_for_entry_frame(RegisterMap *map) const {
 }
 
 UpcallStub::FrameData* UpcallStub::frame_data_for_frame(const frame& frame) const {
-  ShouldNotCallThis();
-  return nullptr;
+  assert(frame.is_upcall_stub_frame(), "wrong frame");
+  // need unextended_sp here, since normal sp is wrong for interpreter callees
+  return reinterpret_cast<UpcallStub::FrameData*>(
+    reinterpret_cast<address>(frame.unextended_sp()) + in_bytes(_frame_data_offset));
 }
 
 bool frame::upcall_stub_frame_is_first() const {
-  ShouldNotCallThis();
-  return false;
+  assert(is_upcall_stub_frame(), "must be optimzed entry frame");
+  UpcallStub* blob = _cb->as_upcall_stub();
+  JavaFrameAnchor* jfa = blob->jfa_for_frame(*this);
+  return jfa->last_Java_sp() == NULL;
 }
 
 frame frame::sender_for_interpreter_frame(RegisterMap *map) const {

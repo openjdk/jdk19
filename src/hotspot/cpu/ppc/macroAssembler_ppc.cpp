@@ -1360,7 +1360,8 @@ void MacroAssembler::int_move(VMRegPair src, VMRegPair dst,
                               Register r_caller_sp, Register r_temp,
                               int in_stk_bias, int out_stk_bias) {
   assert(src.first()->is_valid(), "incoming must be int");
-  assert(dst.first()->is_valid() && dst.second() == dst.first()->next(), "outgoing must be long");
+  // upcall stub can use int as dst, downcalls use only long.
+  assert(dst.first()->is_valid(), "outgoing must be int or long");
 
   if (src.first()->is_stack()) {
     if (dst.first()->is_stack()) {
