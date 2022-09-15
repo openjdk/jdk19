@@ -227,7 +227,7 @@ void DowncallStubGenerator::generate() {
         offset += 8;
       } else if(reg->is_FloatRegister()) {
         __ stfd(reg->as_FloatRegister(), offset, tmp);
-        offset += 16;
+        offset += 8;
       } else {
         ShouldNotReachHere();
       }
