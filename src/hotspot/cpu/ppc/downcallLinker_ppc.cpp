@@ -140,16 +140,17 @@ void DowncallStubGenerator::generate() {
 
   int allocated_frame_size = frame::abi_reg_args_size;
   if (_needs_return_buffer) {
-    allocated_frame_size += 8; // for address spill
+    ShouldNotReachHere();
+    //allocated_frame_size += 8; // for address spill
   }
   allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
   assert(_abi._shadow_space_bytes == frame::abi_reg_args_size, "expected space according to ABI");
 
   int ret_buf_addr_sp_offset = -1;
-  if (_needs_return_buffer) {
-     // in sync with the above
-     ret_buf_addr_sp_offset = allocated_frame_size - 8;
-  }
+  //if (_needs_return_buffer) {
+  //   // in sync with the above
+  //   ret_buf_addr_sp_offset = allocated_frame_size - 8;
+  //}
 
   RegSpiller out_reg_spiller(_output_registers);
   int spill_offset = -1;
@@ -185,10 +186,10 @@ void DowncallStubGenerator::generate() {
   __ block_comment("{ argument shuffle");
   // TODO: Check if in_stk_bias is always correct (interpreter / JIT)?
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, _abi._shadow_space_bytes);
-  if (_needs_return_buffer) {
-    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);
-  }
+  //if (_needs_return_buffer) {
+  //  assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
+  //  __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);
+  //}
   __ block_comment("} argument shuffle");
 
   __ mtctr(_abi._target_addr_reg);
@@ -203,7 +204,7 @@ void DowncallStubGenerator::generate() {
       case T_BOOLEAN: // convert !=0 to 1
                       __ neg(tmp, R3_RET);
                       __ orr(tmp, R3_RET, tmp);
-                      __ srwi(R3_RET, tmp, 31);      break;
+                      __ srwi(R3_RET, tmp, 31);       break;
       case T_CHAR   : __ clrldi(R3_RET, R3_RET, 48);  break;
       case T_BYTE   : __ extsb(R3_RET, R3_RET);       break;
       case T_SHORT  : __ extsh(R3_RET, R3_RET);       break;
@@ -216,23 +217,24 @@ void DowncallStubGenerator::generate() {
       case T_LONG: break;
       default       : ShouldNotReachHere();
     }
-  } else {
-    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-    __ ld(tmp, ret_buf_addr_sp_offset, R1_SP);
-    int offset = 0;
-    for (int i = 0; i < _output_registers.length(); i++) {
-      VMReg reg = _output_registers.at(i);
-      if (reg->is_Register()) {
-        __ std(reg->as_Register(), offset, tmp);
-        offset += 8;
-      } else if(reg->is_FloatRegister()) {
-        __ stfd(reg->as_FloatRegister(), offset, tmp);
-        offset += 8;
-      } else {
-        ShouldNotReachHere();
-      }
-    }
   }
+  //else {
+  //  assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
+  //  __ ld(tmp, ret_buf_addr_sp_offset, R1_SP);
+  //  int offset = 0;
+  //  for (int i = 0; i < _output_registers.length(); i++) {
+  //    VMReg reg = _output_registers.at(i);
+  //    if (reg->is_Register()) {
+  //      __ std(reg->as_Register(), offset, tmp);
+  //      offset += 8;
+  //    } else if(reg->is_FloatRegister()) {
+  //      __ stfd(reg->as_FloatRegister(), offset, tmp);
+  //      offset += 8;
+  //    } else {
+  //      ShouldNotReachHere();
+  //    }
+  //  }
+  //}
 
   // State transition
   __ li(tmp, _thread_in_native_trans);

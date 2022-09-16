@@ -76,7 +76,7 @@ public abstract class CallArranger {
         16,  // Stack is always 16 byte aligned on PPC64
         96,  // ABI v2 header (Little Endian)
         r12, // target addr reg
-        r3   // return buffer addr reg // FIXME: Check!
+        r0   // unused (return buffer addr reg)
     );
 
     // record

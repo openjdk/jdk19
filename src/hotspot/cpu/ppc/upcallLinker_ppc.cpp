@@ -160,8 +160,9 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
 
   int ret_buf_offset = -1;
   if (needs_return_buffer) {
-    ret_buf_offset = frame_bottom_offset;
-    frame_bottom_offset += ret_buf_size;
+    ShouldNotReachHere();
+    //ret_buf_offset = frame_bottom_offset;
+    //frame_bottom_offset += ret_buf_size;
   }
 
   int frame_size = frame_bottom_offset;
@@ -216,11 +217,10 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
 
   __ block_comment("{ argument shuffle");
   arg_spiller.generate_fill(_masm, arg_save_area_offset);
-  if (needs_return_buffer) {
-    assert(ret_buf_offset != -1, "no return buffer allocated");
-    __ addi(abi._ret_buf_addr_reg, R1_SP, ret_buf_offset);
-    __ untested("return buffer"); // TODO: needs to live in nv reg!
-  }
+  //if (needs_return_buffer) {
+  //  assert(ret_buf_offset != -1, "no return buffer allocated");
+  //  __ addi(abi._ret_buf_addr_reg, R1_SP, ret_buf_offset);
+  //}
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), abi._shadow_space_bytes, 0);
   __ block_comment("} argument shuffle");
 
@@ -263,23 +263,24 @@ address UpcallLinker::make_upcall_stub(jobject receiver, Method* entry,
       "unexpected result register: %s != %s", call_regs._ret_regs.at(0)->name(), j_expected_result_reg->name());
     }
 #endif
-  } else {
-    assert(ret_buf_offset != -1, "no return buffer allocated");
-    int offset = ret_buf_offset;
-    for (int i = 0; i < call_regs._ret_regs.length(); i++) {
-      VMReg reg = call_regs._ret_regs.at(i);
-      if (reg->is_Register()) {
-        __ ld(reg->as_Register(), offset, R1_SP);
-        offset += 8;
-      } else if (reg->is_FloatRegister()) {
-        __ lfd(reg->as_FloatRegister(), offset, R1_SP);
-        offset += 8;
-      } else {
-        ShouldNotReachHere();
-      }
-    }
-    __ untested("result from return buffer");
   }
+  //else {
+  //  assert(ret_buf_offset != -1, "no return buffer allocated");
+  //  int offset = ret_buf_offset;
+  //  for (int i = 0; i < call_regs._ret_regs.length(); i++) {
+  //    VMReg reg = call_regs._ret_regs.at(i);
+  //    if (reg->is_Register()) {
+  //      __ ld(reg->as_Register(), offset, R1_SP);
+  //      offset += 8;
+  //    } else if (reg->is_FloatRegister()) {
+  //      __ lfd(reg->as_FloatRegister(), offset, R1_SP);
+  //      offset += 8;
+  //    } else {
+  //      ShouldNotReachHere();
+  //    }
+  //  }
+  //  __ untested("result from return buffer");
+  //}
 
   result_spiller.generate_spill(_masm, res_save_area_offset);
 
