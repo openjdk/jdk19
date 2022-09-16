@@ -153,14 +153,12 @@ void DowncallStubGenerator::generate() {
   //}
 
   RegSpiller out_reg_spiller(_output_registers);
-  int spill_offset = -1;
+  int spill_offset = frame::abi_reg_args_size;
 
   if (!_needs_return_buffer) {
-    spill_offset = 0;
     // spill area can be shared with the above, so we take the max of the 2
-    allocated_frame_size = out_reg_spiller.spill_size_bytes() > allocated_frame_size
-      ? out_reg_spiller.spill_size_bytes()
-      : allocated_frame_size;
+    allocated_frame_size = MAX2(out_reg_spiller.spill_size_bytes() + frame::abi_reg_args_size,
+                                allocated_frame_size);
   }
 
   allocated_frame_size = align_up(allocated_frame_size, frame::alignment_in_bytes);
