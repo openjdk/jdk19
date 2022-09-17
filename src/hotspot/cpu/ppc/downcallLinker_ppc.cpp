@@ -143,7 +143,19 @@ void DowncallStubGenerator::generate() {
     ShouldNotReachHere();
     //allocated_frame_size += 8; // for address spill
   }
-  allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
+
+  // TODO: Can this get solved in NativeCallingConvention?
+  // arg_shuffle.out_arg_stack_slots() does not compute the correct number of stack slots
+  // when both, int and float arguments are passed.
+  // On PPC64, the callee can write an 8 Byte slot per argument.
+  // 8 slots are already reserved by abi_reg_args.
+  int num_real_args = 0;
+  for (int i = 0; i < _num_args; ++i) {
+    if (_signature[i] != T_VOID) num_real_args++;
+  }
+  int out_arg_stack_slots = MAX2(0, (num_real_args - 8) * 2);
+  assert(out_arg_stack_slots >= arg_shuffle.out_arg_stack_slots(), "should be");
+  allocated_frame_size += out_arg_stack_slots << LogBytesPerInt;
   assert(_abi._shadow_space_bytes == frame::abi_reg_args_size, "expected space according to ABI");
 
   int ret_buf_addr_sp_offset = -1;
