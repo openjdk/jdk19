@@ -122,11 +122,88 @@ RuntimeStub* DowncallLinker::make_downcall_stub(BasicType* signature,
   return stub;
 }
 
+class PPC64NativeCallingConvention : public NativeCallingConvention {
+public:
+  PPC64NativeCallingConvention(const GrowableArray<VMReg>& input_regs) : NativeCallingConvention(input_regs) {}
+
+  int calling_convention(BasicType *sig_bt, VMRegPair *out_regs, int num_args) const override {
+    int src_pos = 0;
+    int stk_slots = 0;
+    for (int i = 0; i < num_args; i++) {
+      switch (sig_bt[i]) {
+      // CCallingConventionRequiresIntsAsLongs
+      case T_BOOLEAN:
+      case T_CHAR:
+      case T_BYTE:
+      case T_SHORT:
+      case T_INT:
+      case T_LONG: {
+        assert(src_pos < _input_regs.length(), "oob");
+        VMReg reg = _input_regs.at(src_pos);
+        if (src_pos <= Argument::n_regs_not_on_stack_c) {
+          assert(!reg->is_stack(), "sanity");
+        } else {
+          STATIC_ASSERT(Argument::n_regs_not_on_stack_c == Argument::n_int_register_parameters_c);
+          reg = VMRegImpl::stack2reg(stk_slots);
+          stk_slots += 2;
+        }
+        out_regs[i].set2(reg);
+        src_pos++;
+        break;
+      }
+      case T_FLOAT: {
+        assert(src_pos < _input_regs.length(), "oob");
+        VMReg reg = _input_regs.at(src_pos);
+        if (src_pos <= Argument::n_regs_not_on_stack_c) {
+          assert(!reg->is_stack(), "sanity");
+        } else {
+          // float out regs are same as in regs, so only need to copy to stack
+          // TODO: should we pass it in both, reg and stack?
+          if (src_pos >= Argument::n_float_register_parameters_c) {
+            // TODO: Check AIX (see c_calling_convention)
+            reg = VMRegImpl::stack2reg(stk_slots AIX_ONLY( +1 ));
+          }
+          stk_slots += 2;
+        }
+        out_regs[i].set1(reg);
+        src_pos++;
+        break;
+      }
+      case T_DOUBLE: {
+        assert(src_pos + 1 < _input_regs.length(), "oob");
+        VMReg reg = _input_regs.at(src_pos);
+        if (src_pos <= Argument::n_regs_not_on_stack_c) {
+          assert(!reg->is_stack(), "sanity");
+        } else {
+          // float out regs are same as in regs, so only need to copy to stack
+          if (src_pos >= Argument::n_float_register_parameters_c) {
+            reg = VMRegImpl::stack2reg(stk_slots);
+          }
+          stk_slots += 2;
+        }
+        out_regs[i].set2(reg);
+        src_pos++;
+        break;
+      }
+      case T_VOID: // Halves of longs and doubles
+        assert(i != 0 && (sig_bt[i - 1] == T_LONG || sig_bt[i - 1] == T_DOUBLE),
+               "expecting half");
+        out_regs[i].set_bad();
+        break;
+      default:
+        ShouldNotReachHere();
+        break;
+      }
+    }
+    return stk_slots;
+  }
+};
+
 void DowncallStubGenerator::generate() {
   Register tmp = R11_scratch1,
-           shuffle_reg = tmp;
+           shuffle_reg = R2;
   JavaCallingConvention in_conv;
-  NativeCallingConvention out_conv(_input_registers);
+  PPC64NativeCallingConvention out_conv(_input_registers);
   ArgumentShuffle arg_shuffle(_signature, _num_args, _signature, _num_args, &in_conv, &out_conv, shuffle_reg->as_VMReg());
 
 #ifndef PRODUCT
@@ -144,18 +221,7 @@ void DowncallStubGenerator::generate() {
     //allocated_frame_size += 8; // for address spill
   }
 
-  // TODO: Can this get solved in NativeCallingConvention?
-  // arg_shuffle.out_arg_stack_slots() does not compute the correct number of stack slots
-  // when both, int and float arguments are passed.
-  // On PPC64, the callee can write an 8 Byte slot per argument.
-  // 8 slots are already reserved by abi_reg_args.
-  int num_real_args = 0;
-  for (int i = 0; i < _num_args; ++i) {
-    if (_signature[i] != T_VOID) num_real_args++;
-  }
-  int out_arg_stack_slots = MAX2(0, (num_real_args - 8) * 2);
-  assert(out_arg_stack_slots >= arg_shuffle.out_arg_stack_slots(), "should be");
-  allocated_frame_size += out_arg_stack_slots << LogBytesPerInt;
+  allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
   assert(_abi._shadow_space_bytes == frame::abi_reg_args_size, "expected space according to ABI");
 
   int ret_buf_addr_sp_offset = -1;
@@ -180,6 +246,7 @@ void DowncallStubGenerator::generate() {
   address start = __ pc();
 
   __ save_LR_CR(tmp); // Save in old frame.
+  __ mr(shuffle_reg, R1_SP); // preset (used to access caller frame argument slots)
   __ push_frame(allocated_frame_size, tmp);
 
   _frame_complete = __ pc() - start;

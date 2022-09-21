@@ -67,6 +67,7 @@ public:
 };
 
 class NativeCallingConvention : public CallingConventionClosure {
+protected:
   GrowableArray<VMReg> _input_regs;
 public:
   NativeCallingConvention(const GrowableArray<VMReg>& input_regs)

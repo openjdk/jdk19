@@ -113,8 +113,7 @@ void RegSpiller::pd_load_reg(MacroAssembler* masm, int offset, VMReg reg) {
 }
 
 void ArgumentShuffle::pd_generate(MacroAssembler* masm, VMReg tmp, int in_stk_bias, int out_stk_bias) const {
-  Register callerSP = tmp->as_Register();
-  masm->ld(callerSP, 0, R1_SP);
+  Register callerSP = tmp->as_Register(); // preset
   for (int i = 0; i < _moves.length(); i++) {
     Move move = _moves.at(i);
     BasicType arg_bt     = move.bt;
