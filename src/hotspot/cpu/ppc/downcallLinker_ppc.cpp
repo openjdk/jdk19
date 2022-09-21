@@ -170,7 +170,7 @@ public:
         break;
       }
       case T_DOUBLE: {
-        assert(src_pos + 1 < _input_regs.length(), "oob");
+        assert(src_pos < _input_regs.length(), "oob");
         VMReg reg = _input_regs.at(src_pos);
         if (src_pos <= Argument::n_regs_not_on_stack_c) {
           assert(!reg->is_stack(), "sanity");
