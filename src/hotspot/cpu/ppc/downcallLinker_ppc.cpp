@@ -128,7 +128,6 @@ public:
 
   int calling_convention(BasicType *sig_bt, VMRegPair *out_regs, int num_args) const override {
     int src_pos = 0;
-    int stk_slots = 0;
     for (int i = 0; i < num_args; i++) {
       switch (sig_bt[i]) {
       // CCallingConventionRequiresIntsAsLongs
@@ -137,16 +136,10 @@ public:
       case T_BYTE:
       case T_SHORT:
       case T_INT:
-      case T_LONG: {
+      case T_LONG:
+      case T_DOUBLE: {
         assert(src_pos < _input_regs.length(), "oob");
         VMReg reg = _input_regs.at(src_pos);
-        if (src_pos <= Argument::n_regs_not_on_stack_c) {
-          assert(!reg->is_stack(), "sanity");
-        } else {
-          STATIC_ASSERT(Argument::n_regs_not_on_stack_c == Argument::n_int_register_parameters_c);
-          reg = VMRegImpl::stack2reg(stk_slots);
-          stk_slots += 2;
-        }
         out_regs[i].set2(reg);
         src_pos++;
         break;
@@ -154,34 +147,8 @@ public:
       case T_FLOAT: {
         assert(src_pos < _input_regs.length(), "oob");
         VMReg reg = _input_regs.at(src_pos);
-        if (src_pos <= Argument::n_regs_not_on_stack_c) {
-          assert(!reg->is_stack(), "sanity");
-        } else {
-          // float out regs are same as in regs, so only need to copy to stack
-          // TODO: should we pass it in both, reg and stack?
-          if (src_pos >= Argument::n_float_register_parameters_c) {
-            // TODO: Check AIX (see c_calling_convention)
-            reg = VMRegImpl::stack2reg(stk_slots AIX_ONLY( +1 ));
-          }
-          stk_slots += 2;
-        }
+        // TODO: Check and enable AIX_ONLY(reg = reg->next();)
         out_regs[i].set1(reg);
-        src_pos++;
-        break;
-      }
-      case T_DOUBLE: {
-        assert(src_pos < _input_regs.length(), "oob");
-        VMReg reg = _input_regs.at(src_pos);
-        if (src_pos <= Argument::n_regs_not_on_stack_c) {
-          assert(!reg->is_stack(), "sanity");
-        } else {
-          // float out regs are same as in regs, so only need to copy to stack
-          if (src_pos >= Argument::n_float_register_parameters_c) {
-            reg = VMRegImpl::stack2reg(stk_slots);
-          }
-          stk_slots += 2;
-        }
-        out_regs[i].set2(reg);
         src_pos++;
         break;
       }
@@ -195,7 +162,7 @@ public:
         break;
       }
     }
-    return stk_slots;
+    return _input_regs.length() * 2;
   }
 };
 
@@ -215,7 +182,7 @@ void DowncallStubGenerator::generate() {
   }
 #endif
 
-  int allocated_frame_size = frame::abi_reg_args_size;
+  int allocated_frame_size = frame::abi_minframe_size;
   if (_needs_return_buffer) {
     ShouldNotReachHere();
     //allocated_frame_size += 8; // for address spill
@@ -262,7 +229,7 @@ void DowncallStubGenerator::generate() {
 
   __ block_comment("{ argument shuffle");
   // TODO: Check if in_stk_bias is always correct (interpreter / JIT)?
-  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, _abi._shadow_space_bytes);
+  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, frame::abi_minframe_size);
   //if (_needs_return_buffer) {
   //  assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
   //  __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);

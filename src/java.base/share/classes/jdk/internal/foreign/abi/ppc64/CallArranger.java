@@ -72,7 +72,7 @@ public abstract class CallArranger {
         new VMStorage[] { r3 }, // GP output
         new VMStorage[] { f1 }, // FP output
         new VMStorage[] { r0, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 }, // volatile GP
-        new VMStorage[] { f0, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13 }, // volatile FP
+        new VMStorage[] { f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13 }, // volatile FP
         16,  // Stack is always 16 byte aligned on PPC64
         96,  // ABI v2 header (Little Endian)
         r12, // target addr reg
@@ -99,11 +99,6 @@ public abstract class CallArranger {
      * @return true if variadic arguments should be spilled to the stack.
      */
     protected abstract boolean varArgsOnStack();
-
-    /**
-     * {@return true if this ABI requires sub-slot (smaller than STACK_SLOT_SIZE) packing of arguments on the stack.}
-     */
-    protected abstract boolean requiresSubSlotStackPacking();
 
     protected CallArranger() {}
 
@@ -188,7 +183,7 @@ public abstract class CallArranger {
         }
 
         VMStorage[] regAlloc(int type, int count) {
-            if (nRegs[type] + count <= MAX_REGISTER_ARGUMENTS) {
+            if (nRegs[0] + nRegs[1] + count <= MAX_REGISTER_ARGUMENTS) {
                 VMStorage[] source =
                     (forArguments ? C.inputStorage : C.outputStorage)[type];
                 VMStorage[] result = new VMStorage[count];
@@ -196,12 +191,8 @@ public abstract class CallArranger {
                     result[i] = source[nRegs[type]++];
                 }
                 return result;
-            } else {
-                // Any further allocations for this register type must
-                // be from the stack.
-                nRegs[type] = MAX_REGISTER_ARGUMENTS;
-                return null;
             }
+            return null; // use stack
         }
 
         VMStorage[] regAlloc(int type, MemoryLayout layout) {
@@ -210,11 +201,10 @@ public abstract class CallArranger {
 
         VMStorage nextStorage(int type, MemoryLayout layout) {
             VMStorage[] storage = regAlloc(type, 1);
-            if (storage == null) {
-                return stackAlloc(layout);
-            }
-
-            return storage[0];
+            // PPC64 requires spill slot for each register argument.
+            // So, allocate stack space regardless of reg or stack usage.
+            VMStorage stack = stackAlloc(layout);
+            return storage == null ? stack : storage[0];
         }
 
         void adjustForVarArgs() {
