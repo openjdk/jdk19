@@ -38,7 +38,7 @@ public enum TypeClass {
     INTEGER,
     FLOAT;
 
-    private static final int MAX_AGGREGATE_REGS_SIZE = 1; // TODO: Do we need aggregate regs?
+    private static final int MAX_AGGREGATE_REGS_SIZE = 8;
 
     private static TypeClass classifyValueType(ValueLayout type) {
         Class<?> carrier = type.carrier();
