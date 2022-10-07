@@ -182,28 +182,23 @@ void DowncallStubGenerator::generate() {
   }
 #endif
 
-  int allocated_frame_size = frame::abi_minframe_size;
-  if (_needs_return_buffer) {
-    ShouldNotReachHere();
-    //allocated_frame_size += 8; // for address spill
-  }
-
-  allocated_frame_size += arg_shuffle.out_arg_stack_slots() << LogBytesPerInt;
   assert(_abi._shadow_space_bytes == frame::abi_reg_args_size, "expected space according to ABI");
-
-  int ret_buf_addr_sp_offset = -1;
-  //if (_needs_return_buffer) {
-  //   // in sync with the above
-  //   ret_buf_addr_sp_offset = allocated_frame_size - 8;
-  //}
+  int allocated_frame_size = MAX2((int)frame::abi_minframe_size +
+                                  (arg_shuffle.out_arg_stack_slots() << LogBytesPerInt),
+                                  (int)frame::abi_reg_args_size);
 
   RegSpiller out_reg_spiller(_output_registers);
-  int spill_offset = frame::abi_reg_args_size;
+  int ret_buf_addr_sp_offset = -1,
+      spill_offset = -1;
 
-  if (!_needs_return_buffer) {
-    // spill area can be shared with the above, so we take the max of the 2
-    allocated_frame_size = MAX2(out_reg_spiller.spill_size_bytes() + frame::abi_reg_args_size,
-                                allocated_frame_size);
+  if (_needs_return_buffer) {
+    // spill slot for return buffer address
+    ret_buf_addr_sp_offset = allocated_frame_size;
+    allocated_frame_size += 8;
+  } else {
+    // spill area can be shared with the above
+    spill_offset = frame::abi_reg_args_size;
+    allocated_frame_size += out_reg_spiller.spill_size_bytes();
   }
 
   allocated_frame_size = align_up(allocated_frame_size, frame::alignment_in_bytes);
@@ -223,17 +218,16 @@ void DowncallStubGenerator::generate() {
   __ set_last_Java_frame(R1_SP, tmp);
 
   // State transition
-  __ li(tmp, _thread_in_native);
+  __ li(R0, _thread_in_native);
   __ release();
-  __ stw(tmp, in_bytes(JavaThread::thread_state_offset()), R16_thread);
+  __ stw(R0, in_bytes(JavaThread::thread_state_offset()), R16_thread);
 
   __ block_comment("{ argument shuffle");
-  // TODO: Check if in_stk_bias is always correct (interpreter / JIT)?
+  if (_needs_return_buffer) {
+    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
+    __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);
+  }
   arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, frame::abi_minframe_size);
-  //if (_needs_return_buffer) {
-  //  assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-  //  __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);
-  //}
   __ block_comment("} argument shuffle");
 
   __ mtctr(_abi._target_addr_reg);
@@ -261,24 +255,24 @@ void DowncallStubGenerator::generate() {
       case T_LONG: break;
       default       : ShouldNotReachHere();
     }
+  } else {
+    assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
+    __ ld(tmp, ret_buf_addr_sp_offset, R1_SP);
+    int offset = 0;
+    for (int i = 0; i < _output_registers.length(); i++) {
+      VMReg reg = _output_registers.at(i);
+      if (reg->is_Register()) {
+        __ std(reg->as_Register(), offset, tmp);
+        offset += 8;
+      } else if (reg->is_FloatRegister()) {
+        __ stfd(reg->as_FloatRegister(), offset, tmp);
+        offset += 8;
+      } else {
+        ShouldNotReachHere();
+      }
+    }
+    __ untested("return buffer");
   }
-  //else {
-  //  assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
-  //  __ ld(tmp, ret_buf_addr_sp_offset, R1_SP);
-  //  int offset = 0;
-  //  for (int i = 0; i < _output_registers.length(); i++) {
-  //    VMReg reg = _output_registers.at(i);
-  //    if (reg->is_Register()) {
-  //      __ std(reg->as_Register(), offset, tmp);
-  //      offset += 8;
-  //    } else if(reg->is_FloatRegister()) {
-  //      __ stfd(reg->as_FloatRegister(), offset, tmp);
-  //      offset += 8;
-  //    } else {
-  //      ShouldNotReachHere();
-  //    }
-  //  }
-  //}
 
   // State transition
   __ li(tmp, _thread_in_native_trans);

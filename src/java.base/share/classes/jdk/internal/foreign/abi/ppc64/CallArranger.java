@@ -76,7 +76,7 @@ public abstract class CallArranger {
         16,  // Stack is always 16 byte aligned on PPC64
         96,  // ABI v2 header (Little Endian)
         r12, // target addr reg
-        r0   // unused (return buffer addr reg)
+        r3   // return buffer addr reg (hidden first argument)
     );
 
     // record
@@ -183,7 +183,7 @@ public abstract class CallArranger {
         }
 
         VMStorage[] regAlloc(int type, int count) {
-            if (nRegs[0] + nRegs[1] + count <= MAX_REGISTER_ARGUMENTS) {
+            if (nRegs[0] + nRegs[1] + count <= (forArguments ? MAX_REGISTER_ARGUMENTS : 1)) {
                 VMStorage[] source =
                     (forArguments ? C.inputStorage : C.outputStorage)[type];
                 VMStorage[] result = new VMStorage[count];
