@@ -223,11 +223,11 @@ void DowncallStubGenerator::generate() {
   __ stw(R0, in_bytes(JavaThread::thread_state_offset()), R16_thread);
 
   __ block_comment("{ argument shuffle");
+  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, frame::abi_minframe_size);
   if (_needs_return_buffer) {
     assert(ret_buf_addr_sp_offset != -1, "no return buffer addr spill");
     __ std(_abi._ret_buf_addr_reg, ret_buf_addr_sp_offset, R1_SP);
   }
-  arg_shuffle.generate(_masm, shuffle_reg->as_VMReg(), frame::jit_out_preserve_size, frame::abi_minframe_size);
   __ block_comment("} argument shuffle");
 
   __ mtctr(_abi._target_addr_reg);
