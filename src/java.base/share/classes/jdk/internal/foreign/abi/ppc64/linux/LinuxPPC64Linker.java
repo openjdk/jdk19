@@ -37,10 +37,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.function.Consumer;
 
-/**
- * ABI implementation based on ARM document "Procedure Call Standard for
- * the ARM 64-bit Architecture".
- */
 public final class LinuxPPC64Linker extends AbstractLinker {
     private static LinuxPPC64Linker instance;
 
