@@ -156,7 +156,6 @@ public abstract class CallArranger {
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
         return returnLayout
             .filter(GroupLayout.class::isInstance)
-            .filter(g -> TypeClass.classifyLayout(g) == TypeClass.STRUCT_REFERENCE)
             .isPresent();
     }
 
