@@ -31,11 +31,4 @@ import jdk.internal.foreign.abi.ppc64.CallArranger;
  * PPC64 CallArranger specialized for Linux ABI.
  */
 public class LinuxPPC64CallArranger extends CallArranger {
-
-    @Override
-    protected boolean varArgsOnStack() {
-        // Variadic arguments are passed as normal arguments
-        return false;
-    }
-
 }

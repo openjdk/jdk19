@@ -44,6 +44,7 @@ import jdk.internal.foreign.Utils;
 import java.lang.foreign.MemorySession;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,6 +62,8 @@ import static jdk.internal.foreign.abi.ppc64.PPC64Architecture.*;
  * public constants CallArranger.LINUX.
  */
 public abstract class CallArranger {
+    // Linux PPC64 Little Endian uses ABI v2.
+    private static final boolean useABIv2 = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
     private static final int STACK_SLOT_SIZE = 8;
     public static final int MAX_REGISTER_ARGUMENTS = 8;
 
@@ -73,8 +76,8 @@ public abstract class CallArranger {
         new VMStorage[] { f1 }, // FP output
         new VMStorage[] { r0, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12 }, // volatile GP
         new VMStorage[] { f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13 }, // volatile FP
-        16,  // Stack is always 16 byte aligned on PPC64
-        96,  // ABI v2 header (Little Endian)
+        16, // Stack is always 16 byte aligned on PPC64
+        useABIv2 ? 96 : 112, // ABI header
         r12, // target addr reg
         r3   // return buffer addr reg (hidden first argument)
     );
@@ -98,7 +101,7 @@ public abstract class CallArranger {
      *
      * @return true if variadic arguments should be spilled to the stack.
      */
-    protected abstract boolean varArgsOnStack();
+    protected boolean varArgsOnStack() { return false; }
 
     protected CallArranger() {}
 
@@ -171,7 +174,8 @@ public abstract class CallArranger {
         }
 
         VMStorage stackAlloc(long size, long alignment) {
-            assert forArguments : "no stack returns";
+            // TODO: Check!
+            //assert forArguments : "no stack returns";
             VMStorage storage = stackStorage((int)stackOffset);
             stackOffset++;
             return storage;
