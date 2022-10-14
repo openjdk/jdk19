@@ -66,7 +66,7 @@ public enum TypeClass {
         GroupLayout groupLayout = (GroupLayout)type;
 
         final int numElements = groupLayout.memberLayouts().size();
-        if (numElements > 4 || numElements == 0)
+        if (numElements > 8 || numElements == 0)
             return false;
 
         MemoryLayout baseType = groupLayout.memberLayouts().get(0);
