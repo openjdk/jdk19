@@ -34,6 +34,7 @@ import java.lang.foreign.ValueLayout;
 public enum TypeClass {
     STRUCT_REGISTER,
     STRUCT_REFERENCE,
+    STRUCT_HFA,
     POINTER,
     INTEGER,
     FLOAT;
@@ -58,8 +59,44 @@ public enum TypeClass {
         return type.bitSize() <= MAX_AGGREGATE_REGS_SIZE * 64;
     }
 
+    static boolean isHomogeneousFloatAggregate(MemoryLayout type) {
+        if (!(type instanceof GroupLayout))
+            return false;
+
+        GroupLayout groupLayout = (GroupLayout)type;
+
+        final int numElements = groupLayout.memberLayouts().size();
+        if (numElements > 4 || numElements == 0)
+            return false;
+
+        MemoryLayout baseType = groupLayout.memberLayouts().get(0);
+
+        if (!(baseType instanceof ValueLayout))
+            return false;
+
+        TypeClass baseArgClass = classifyValueType((ValueLayout) baseType);
+        if (baseArgClass != FLOAT)
+           return false;
+
+        for (MemoryLayout elem : groupLayout.memberLayouts()) {
+            if (!(elem instanceof ValueLayout))
+                return false;
+
+            TypeClass argClass = classifyValueType((ValueLayout) elem);
+            if (elem.bitSize() != baseType.bitSize() ||
+                    elem.bitAlignment() != baseType.bitAlignment() ||
+                    baseArgClass != argClass) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private static TypeClass classifyStructType(MemoryLayout layout) {
-        if (isRegisterAggregate(layout)) {
+        if (isHomogeneousFloatAggregate(layout)) {
+            return TypeClass.STRUCT_HFA;
+        } else if (isRegisterAggregate(layout)) {
             return TypeClass.STRUCT_REGISTER;
         }
         return TypeClass.STRUCT_REFERENCE;

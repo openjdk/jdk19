@@ -268,7 +268,7 @@ public non-sealed class LinuxPPC64VaList implements VaList, Scoped {
             checkStackElement(layout);
             preAlignStack(layout);
             return switch (typeClass) {
-                case STRUCT_REGISTER, STRUCT_REFERENCE -> {
+                case STRUCT_REGISTER, STRUCT_HFA, STRUCT_REFERENCE -> {
                     MemorySegment slice = stack.asSlice(0, layout.byteSize());
                     MemorySegment seg = allocator.allocate(layout);
                     seg.copyFrom(slice);
@@ -294,6 +294,22 @@ public non-sealed class LinuxPPC64VaList implements VaList, Scoped {
                         final long copy = Math.min(layout.byteSize() - offset, 8);
                         MemorySegment.copy(gpRegsArea, currentGPOffset(), value, offset, copy);
                         consumeGPSlots(1);
+                        offset += copy;
+                    }
+                    yield value;
+                }
+                case STRUCT_HFA -> {
+                    checkFPElement(layout, numSlots(layout));
+                    // Struct is passed with each element in a separate floating
+                    // point register.
+                    MemorySegment value = allocator.allocate(layout);
+                    GroupLayout group = (GroupLayout)layout;
+                    long offset = 0;
+                    for (MemoryLayout elem : group.memberLayouts()) {
+                        assert elem.byteSize() <= 8;
+                        final long copy = elem.byteSize();
+                        MemorySegment.copy(fpRegsArea, currentFPOffset(), value, offset, copy);
+                        consumeFPSlots(1);
                         offset += copy;
                     }
                     yield value;
@@ -358,7 +374,7 @@ public non-sealed class LinuxPPC64VaList implements VaList, Scoped {
                 checkStackElement(layout);
                 preAlignStack(layout);
                 postAlignStack(layout);
-            } else if (typeClass == TypeClass.FLOAT) {
+            } else if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
                 long slots = numSlots(layout);
                 checkFPElement(layout, slots);
                 consumeFPSlots((int) slots);
@@ -404,7 +420,7 @@ public non-sealed class LinuxPPC64VaList implements VaList, Scoped {
 
     private static boolean isRegOverflow(long currentGPOffset, long currentFPOffset,
                                          TypeClass typeClass, MemoryLayout layout) {
-        if (typeClass == TypeClass.FLOAT) {
+        if (typeClass == TypeClass.FLOAT || typeClass == TypeClass.STRUCT_HFA) {
             return currentFPOffset > MAX_FP_OFFSET - numSlots(layout) * FP_SLOT_SIZE;
         } else if (typeClass == TypeClass.STRUCT_REFERENCE) {
             return currentGPOffset > MAX_GP_OFFSET - GP_SLOT_SIZE;
@@ -480,6 +496,20 @@ public non-sealed class LinuxPPC64VaList implements VaList, Scoped {
                             final long copy = Math.min(layout.byteSize() - offset, 8);
                             MemorySegment.copy(valueSegment, offset, gpRegs, currentGPOffset, copy);
                             currentGPOffset += GP_SLOT_SIZE;
+                            offset += copy;
+                        }
+                    }
+                    case STRUCT_HFA -> {
+                        // Struct is passed with each element in a separate floating
+                        // point register.
+                        MemorySegment valueSegment = (MemorySegment) value;
+                        GroupLayout group = (GroupLayout)layout;
+                        long offset = 0;
+                        for (MemoryLayout elem : group.memberLayouts()) {
+                            assert elem.byteSize() <= 8;
+                            final long copy = elem.byteSize();
+                            MemorySegment.copy(valueSegment, offset, fpRegs, currentFPOffset, copy);
+                            currentFPOffset += FP_SLOT_SIZE;
                             offset += copy;
                         }
                     }

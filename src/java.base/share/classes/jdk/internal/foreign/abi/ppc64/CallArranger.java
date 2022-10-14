@@ -312,6 +312,30 @@ public abstract class CallArranger {
                     bindings.vmStore(storage, long.class);
                     break;
                 }
+                case STRUCT_HFA: {
+                    assert carrier == MemorySegment.class;
+                    GroupLayout group = (GroupLayout)layout;
+                    VMStorage[] regs = storageCalculator.regAlloc(
+                        StorageClasses.FLOAT, group.memberLayouts().size());
+                    if (regs != null) {
+                        long offset = 0;
+                        for (int i = 0; i < group.memberLayouts().size(); i++) {
+                            VMStorage storage = regs[i];
+                            final long size = group.memberLayouts().get(i).byteSize();
+                            boolean useFloat = storage.type() == StorageClasses.FLOAT;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
+                            if (i + 1 < group.memberLayouts().size()) {
+                                bindings.dup();
+                            }
+                            bindings.bufferLoad(offset, type)
+                                    .vmStore(storage, type);
+                            offset += size;
+                        }
+                    } else {
+                        spillStructUnbox(bindings, layout);
+                    }
+                    break;
+                }
                 case POINTER: {
                     bindings.unboxAddress(carrier);
                     VMStorage storage =
@@ -378,6 +402,29 @@ public abstract class CallArranger {
                     bindings.vmLoad(storage, long.class)
                             .boxAddress()
                             .toSegment(layout);
+                    break;
+                }
+                case STRUCT_HFA: {
+                    assert carrier == MemorySegment.class;
+                    bindings.allocate(layout);
+                    GroupLayout group = (GroupLayout)layout;
+                    VMStorage[] regs = storageCalculator.regAlloc(
+                        StorageClasses.FLOAT, group.memberLayouts().size());
+                    if (regs != null) {
+                        long offset = 0;
+                        for (int i = 0; i < group.memberLayouts().size(); i++) {
+                            VMStorage storage = regs[i];
+                            final long size = group.memberLayouts().get(i).byteSize();
+                            boolean useFloat = storage.type() == StorageClasses.FLOAT;
+                            Class<?> type = SharedUtils.primitiveCarrierForSize(size, useFloat);
+                            bindings.dup()
+                                    .vmLoad(storage, type)
+                                    .bufferStore(offset, type);
+                            offset += size;
+                        }
+                    } else {
+                        spillStructBox(bindings, layout);
+                    }
                     break;
                 }
                 case POINTER: {
