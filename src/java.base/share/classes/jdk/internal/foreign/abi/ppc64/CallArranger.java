@@ -187,7 +187,7 @@ public abstract class CallArranger {
         }
 
         VMStorage[] regAlloc(int type, int count) {
-            if (nRegs[0] + nRegs[1] + count <= (forArguments ? MAX_REGISTER_ARGUMENTS : 1)) {
+            if (nRegs[0] + count <= (forArguments ? MAX_REGISTER_ARGUMENTS : 1)) {
                 VMStorage[] source =
                     (forArguments ? C.inputStorage : C.outputStorage)[type];
                 VMStorage[] result = new VMStorage[count];
