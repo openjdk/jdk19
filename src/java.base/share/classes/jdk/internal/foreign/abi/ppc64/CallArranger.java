@@ -192,7 +192,9 @@ public abstract class CallArranger {
                     (forArguments ? C.inputStorage : C.outputStorage)[type];
                 VMStorage[] result = new VMStorage[count];
                 for (int i = 0; i < count; i++) {
-                    result[i] = source[nRegs[type]++];
+                    result[i] = source[nRegs[type]];
+                    nRegs[0]++;
+                    if (type == 1) nRegs[1]++;
                 }
                 return result;
             }
