@@ -566,13 +566,6 @@ bool SharedRuntime::is_wide_vector(int size) {
   return size > 8;
 }
 
-static int reg2slot(VMReg r) {
-  return r->reg2stack() + SharedRuntime::out_preserve_stack_slots();
-}
-
-static int reg2offset(VMReg r) {
-  return (r->reg2stack() + SharedRuntime::out_preserve_stack_slots()) * VMRegImpl::stack_slot_size;
-}
 
 // ---------------------------------------------------------------------------
 // Read the array of BasicTypes from a signature, and compute where the
@@ -1308,175 +1301,6 @@ AdapterHandlerEntry* SharedRuntime::generate_i2c2i_adapters(MacroAssembler *masm
                                           c2i_no_clinit_check_entry);
 }
 
-// An oop arg. Must pass a handle not the oop itself.
-static void object_move(MacroAssembler* masm,
-                        int frame_size_in_slots,
-                        OopMap* oop_map, int oop_handle_offset,
-                        bool is_receiver, int* receiver_offset,
-                        VMRegPair src, VMRegPair dst,
-                        Register r_caller_sp, Register r_temp_1, Register r_temp_2) {
-  assert(!is_receiver || (is_receiver && (*receiver_offset == -1)),
-         "receiver has already been moved");
-
-  // We must pass a handle. First figure out the location we use as a handle.
-
-  if (src.first()->is_stack()) {
-    // stack to stack or reg
-
-    const Register r_handle = dst.first()->is_stack() ? r_temp_1 : dst.first()->as_Register();
-    Label skip;
-    const int oop_slot_in_callers_frame = reg2slot(src.first());
-
-    guarantee(!is_receiver, "expecting receiver in register");
-    oop_map->set_oop(VMRegImpl::stack2reg(oop_slot_in_callers_frame + frame_size_in_slots));
-
-    __ addi(r_handle, r_caller_sp, reg2offset(src.first()));
-    __ ld(  r_temp_2, reg2offset(src.first()), r_caller_sp);
-    __ cmpdi(CCR0, r_temp_2, 0);
-    __ bne(CCR0, skip);
-    // Use a NULL handle if oop is NULL.
-    __ li(r_handle, 0);
-    __ bind(skip);
-
-    if (dst.first()->is_stack()) {
-      // stack to stack
-      __ std(r_handle, reg2offset(dst.first()), R1_SP);
-    } else {
-      // stack to reg
-      // Nothing to do, r_handle is already the dst register.
-    }
-  } else {
-    // reg to stack or reg
-    const Register r_oop      = src.first()->as_Register();
-    const Register r_handle   = dst.first()->is_stack() ? r_temp_1 : dst.first()->as_Register();
-    const int oop_slot        = (r_oop->encoding()-R3_ARG1->encoding()) * VMRegImpl::slots_per_word
-                                + oop_handle_offset; // in slots
-    const int oop_offset = oop_slot * VMRegImpl::stack_slot_size;
-    Label skip;
-
-    if (is_receiver) {
-      *receiver_offset = oop_offset;
-    }
-    oop_map->set_oop(VMRegImpl::stack2reg(oop_slot));
-
-    __ std( r_oop,    oop_offset, R1_SP);
-    __ addi(r_handle, R1_SP, oop_offset);
-
-    __ cmpdi(CCR0, r_oop, 0);
-    __ bne(CCR0, skip);
-    // Use a NULL handle if oop is NULL.
-    __ li(r_handle, 0);
-    __ bind(skip);
-
-    if (dst.first()->is_stack()) {
-      // reg to stack
-      __ std(r_handle, reg2offset(dst.first()), R1_SP);
-    } else {
-      // reg to reg
-      // Nothing to do, r_handle is already the dst register.
-    }
-  }
-}
-
-static void int_move(MacroAssembler*masm,
-                     VMRegPair src, VMRegPair dst,
-                     Register r_caller_sp, Register r_temp) {
-  assert(src.first()->is_valid(), "incoming must be int");
-  assert(dst.first()->is_valid() && dst.second() == dst.first()->next(), "outgoing must be long");
-
-  if (src.first()->is_stack()) {
-    if (dst.first()->is_stack()) {
-      // stack to stack
-      __ lwa(r_temp, reg2offset(src.first()), r_caller_sp);
-      __ std(r_temp, reg2offset(dst.first()), R1_SP);
-    } else {
-      // stack to reg
-      __ lwa(dst.first()->as_Register(), reg2offset(src.first()), r_caller_sp);
-    }
-  } else if (dst.first()->is_stack()) {
-    // reg to stack
-    __ extsw(r_temp, src.first()->as_Register());
-    __ std(r_temp, reg2offset(dst.first()), R1_SP);
-  } else {
-    // reg to reg
-    __ extsw(dst.first()->as_Register(), src.first()->as_Register());
-  }
-}
-
-static void long_move(MacroAssembler*masm,
-                      VMRegPair src, VMRegPair dst,
-                      Register r_caller_sp, Register r_temp) {
-  assert(src.first()->is_valid() && src.second() == src.first()->next(), "incoming must be long");
-  assert(dst.first()->is_valid() && dst.second() == dst.first()->next(), "outgoing must be long");
-
-  if (src.first()->is_stack()) {
-    if (dst.first()->is_stack()) {
-      // stack to stack
-      __ ld( r_temp, reg2offset(src.first()), r_caller_sp);
-      __ std(r_temp, reg2offset(dst.first()), R1_SP);
-    } else {
-      // stack to reg
-      __ ld(dst.first()->as_Register(), reg2offset(src.first()), r_caller_sp);
-    }
-  } else if (dst.first()->is_stack()) {
-    // reg to stack
-    __ std(src.first()->as_Register(), reg2offset(dst.first()), R1_SP);
-  } else {
-    // reg to reg
-    if (dst.first()->as_Register() != src.first()->as_Register())
-      __ mr(dst.first()->as_Register(), src.first()->as_Register());
-  }
-}
-
-static void float_move(MacroAssembler*masm,
-                       VMRegPair src, VMRegPair dst,
-                       Register r_caller_sp, Register r_temp) {
-  assert(src.first()->is_valid() && !src.second()->is_valid(), "incoming must be float");
-  assert(dst.first()->is_valid() && !dst.second()->is_valid(), "outgoing must be float");
-
-  if (src.first()->is_stack()) {
-    if (dst.first()->is_stack()) {
-      // stack to stack
-      __ lwz(r_temp, reg2offset(src.first()), r_caller_sp);
-      __ stw(r_temp, reg2offset(dst.first()), R1_SP);
-    } else {
-      // stack to reg
-      __ lfs(dst.first()->as_FloatRegister(), reg2offset(src.first()), r_caller_sp);
-    }
-  } else if (dst.first()->is_stack()) {
-    // reg to stack
-    __ stfs(src.first()->as_FloatRegister(), reg2offset(dst.first()), R1_SP);
-  } else {
-    // reg to reg
-    if (dst.first()->as_FloatRegister() != src.first()->as_FloatRegister())
-      __ fmr(dst.first()->as_FloatRegister(), src.first()->as_FloatRegister());
-  }
-}
-
-static void double_move(MacroAssembler*masm,
-                        VMRegPair src, VMRegPair dst,
-                        Register r_caller_sp, Register r_temp) {
-  assert(src.first()->is_valid() && src.second() == src.first()->next(), "incoming must be double");
-  assert(dst.first()->is_valid() && dst.second() == dst.first()->next(), "outgoing must be double");
-
-  if (src.first()->is_stack()) {
-    if (dst.first()->is_stack()) {
-      // stack to stack
-      __ ld( r_temp, reg2offset(src.first()), r_caller_sp);
-      __ std(r_temp, reg2offset(dst.first()), R1_SP);
-    } else {
-      // stack to reg
-      __ lfd(dst.first()->as_FloatRegister(), reg2offset(src.first()), r_caller_sp);
-    }
-  } else if (dst.first()->is_stack()) {
-    // reg to stack
-    __ stfd(src.first()->as_FloatRegister(), reg2offset(dst.first()), R1_SP);
-  } else {
-    // reg to reg
-    if (dst.first()->as_FloatRegister() != src.first()->as_FloatRegister())
-      __ fmr(dst.first()->as_FloatRegister(), src.first()->as_FloatRegister());
-  }
-}
 
 void SharedRuntime::save_native_result(MacroAssembler *masm, BasicType ret_type, int frame_slots) {
   switch (ret_type) {
@@ -1485,12 +1309,12 @@ void SharedRuntime::save_native_result(MacroAssembler *masm, BasicType ret_type,
     case T_BYTE:
     case T_SHORT:
     case T_INT:
-      __ stw (R3_RET,  frame_slots*VMRegImpl::stack_slot_size, R1_SP);
+      __ stw(R3_RET, frame_slots*VMRegImpl::stack_slot_size, R1_SP);
       break;
     case T_ARRAY:
     case T_OBJECT:
     case T_LONG:
-      __ std (R3_RET,  frame_slots*VMRegImpl::stack_slot_size, R1_SP);
+      __ std(R3_RET, frame_slots*VMRegImpl::stack_slot_size, R1_SP);
       break;
     case T_FLOAT:
       __ stfs(F1_RET, frame_slots*VMRegImpl::stack_slot_size, R1_SP);
@@ -1513,12 +1337,12 @@ void SharedRuntime::restore_native_result(MacroAssembler *masm, BasicType ret_ty
     case T_BYTE:
     case T_SHORT:
     case T_INT:
-      __ lwz(R3_RET,  frame_slots*VMRegImpl::stack_slot_size, R1_SP);
+      __ lwz(R3_RET, frame_slots*VMRegImpl::stack_slot_size, R1_SP);
       break;
     case T_ARRAY:
     case T_OBJECT:
     case T_LONG:
-      __ ld (R3_RET,  frame_slots*VMRegImpl::stack_slot_size, R1_SP);
+      __ ld(R3_RET, frame_slots*VMRegImpl::stack_slot_size, R1_SP);
       break;
     case T_FLOAT:
       __ lfs(F1_RET, frame_slots*VMRegImpl::stack_slot_size, R1_SP);
@@ -1545,7 +1369,8 @@ static void verify_oop_args(MacroAssembler* masm,
         VMReg r = regs[i].first();
         assert(r->is_valid(), "bad oop arg");
         if (r->is_stack()) {
-          __ ld(temp_reg, reg2offset(r), R1_SP);
+          int out_stk_bias = SharedRuntime::out_preserve_stack_slots() * VMRegImpl::stack_slot_size;
+          __ ld(temp_reg, __ reg2offset(r, out_stk_bias), R1_SP);
           __ verify_oop(temp_reg, FILE_AND_LINE);
         } else {
           __ verify_oop(r->as_Register(), FILE_AND_LINE);
@@ -1581,12 +1406,14 @@ static void gen_special_dispatch(MacroAssembler* masm,
     fatal("unexpected intrinsic id %d", vmIntrinsics::as_int(iid));
   }
 
+  int out_stk_bias = SharedRuntime::out_preserve_stack_slots() * VMRegImpl::stack_slot_size;
+
   if (member_reg != noreg) {
     // Load the member_arg into register, if necessary.
     SharedRuntime::check_member_name_argument_is_last_argument(method, sig_bt, regs);
     VMReg r = regs[member_arg_pos].first();
     if (r->is_stack()) {
-      __ ld(member_reg, reg2offset(r), R1_SP);
+      __ ld(member_reg, __ reg2offset(r, out_stk_bias), R1_SP);
     } else {
       // no data motion is needed
       member_reg = r->as_Register();
@@ -1605,7 +1432,7 @@ static void gen_special_dispatch(MacroAssembler* masm,
       // platform, pick a temp and load the receiver from stack.
       fatal("receiver always in a register");
       receiver_reg = R11_scratch1;  // TODO (hs24): is R11_scratch1 really free at this point?
-      __ ld(receiver_reg, reg2offset(r), R1_SP);
+      __ ld(receiver_reg, __ reg2offset(r, out_stk_bias), R1_SP);
     } else {
       // no data motion is needed
       receiver_reg = r->as_Register();
@@ -1918,6 +1745,9 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     }
 #endif // ASSERT
 
+    // c_calling_convention adjusts the slots, so in_stk_bias == out_stk_bias
+    int stk_bias = SharedRuntime::out_preserve_stack_slots() * VMRegImpl::stack_slot_size;
+
     switch (in_sig_bt[in]) {
       case T_BOOLEAN:
       case T_CHAR:
@@ -1925,31 +1755,31 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
       case T_SHORT:
       case T_INT:
         // Move int and do sign extension.
-        int_move(masm, in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ int_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         break;
       case T_LONG:
-        long_move(masm, in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ long_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         break;
       case T_ARRAY:
       case T_OBJECT:
-        object_move(masm, stack_slots,
-                    oop_map, oop_handle_slot_offset,
-                    ((in == 0) && (!method_is_static)), &receiver_offset,
-                    in_regs[in], out_regs[out],
-                    r_callers_sp, r_temp_1, r_temp_2);
+        __ object_move(stack_slots,
+                       oop_map, oop_handle_slot_offset,
+                       ((in == 0) && (!method_is_static)), &receiver_offset,
+                       in_regs[in], out_regs[out],
+                       r_callers_sp, r_temp_1, r_temp_2, stk_bias, stk_bias);
         break;
       case T_VOID:
         break;
       case T_FLOAT:
-        float_move(masm, in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ float_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         if (out_regs2[out].first()->is_valid()) {
-          float_move(masm, in_regs[in], out_regs2[out], r_callers_sp, r_temp_1);
+          __ float_move(in_regs[in], out_regs2[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         }
         break;
       case T_DOUBLE:
-        double_move(masm, in_regs[in], out_regs[out], r_callers_sp, r_temp_1);
+        __ double_move(in_regs[in], out_regs[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         if (out_regs2[out].first()->is_valid()) {
-          double_move(masm, in_regs[in], out_regs2[out], r_callers_sp, r_temp_1);
+          __ double_move(in_regs[in], out_regs2[out], r_callers_sp, r_temp_1, stk_bias, stk_bias);
         }
         break;
       case T_ADDRESS:
@@ -2088,11 +1918,9 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
     case T_ARRAY:   break;
 
     case T_BOOLEAN: {             // 0 -> false(0); !0 -> true(1)
-      Label skip_modify;
-      __ cmpwi(CCR0, R3_RET, 0);
-      __ beq(CCR0, skip_modify);
-      __ li(R3_RET, 1);
-      __ bind(skip_modify);
+      __ neg(R0, R3_RET);
+      __ orr(R0, R3_RET, R0);
+      __ srwi(R3_RET, R0, 31);
       break;
       }
     case T_BYTE: {                // sign extension

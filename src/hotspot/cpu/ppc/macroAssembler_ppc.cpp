@@ -1281,6 +1281,183 @@ void MacroAssembler::call_VM_leaf(address entry_point, Register arg_1, Register 
   call_VM_leaf(entry_point);
 }
 
+
+int MacroAssembler::reg2offset(VMReg r, int stk_bias) {
+  return r->reg2stack() * VMRegImpl::stack_slot_size + stk_bias;
+}
+
+// An oop arg. Must pass a handle not the oop itself.
+void MacroAssembler::object_move(int frame_size_in_slots,
+                                 OopMap* oop_map, int oop_handle_offset,
+                                 bool is_receiver, int* receiver_offset,
+                                 VMRegPair src, VMRegPair dst,
+                                 Register r_caller_sp, Register r_temp_1, Register r_temp_2,
+                                 int in_stk_bias, int out_stk_bias) {
+  assert(!is_receiver || (is_receiver && (*receiver_offset == -1)),
+         "receiver has already been moved");
+
+  // We must pass a handle. First figure out the location we use as a handle.
+
+  if (src.first()->is_stack()) {
+    // stack to stack or reg
+
+    const Register r_handle = dst.first()->is_stack() ? r_temp_1 : dst.first()->as_Register();
+    Label skip;
+    const int oop_slot_in_callers_frame = reg2offset(src.first(), in_stk_bias) / VMRegImpl::stack_slot_size;
+
+    guarantee(!is_receiver, "expecting receiver in register");
+    oop_map->set_oop(VMRegImpl::stack2reg(oop_slot_in_callers_frame + frame_size_in_slots));
+
+    addi(r_handle, r_caller_sp, reg2offset(src.first(), in_stk_bias));
+    ld(  r_temp_2, reg2offset(src.first(), in_stk_bias), r_caller_sp);
+    cmpdi(CCR0, r_temp_2, 0);
+    bne(CCR0, skip);
+    // Use a NULL handle if oop is NULL.
+    li(r_handle, 0);
+    bind(skip);
+
+    if (dst.first()->is_stack()) {
+      // stack to stack
+      std(r_handle, reg2offset(dst.first(), out_stk_bias), R1_SP);
+    } else {
+      // stack to reg
+      // Nothing to do, r_handle is already the dst register.
+    }
+  } else {
+    // reg to stack or reg
+    const Register r_oop      = src.first()->as_Register();
+    const Register r_handle   = dst.first()->is_stack() ? r_temp_1 : dst.first()->as_Register();
+    const int oop_slot        = (r_oop->encoding()-R3_ARG1->encoding()) * VMRegImpl::slots_per_word
+                                + oop_handle_offset; // in slots
+    const int oop_offset = oop_slot * VMRegImpl::stack_slot_size;
+    Label skip;
+
+    if (is_receiver) {
+      *receiver_offset = oop_offset;
+    }
+    oop_map->set_oop(VMRegImpl::stack2reg(oop_slot));
+
+    std( r_oop,    oop_offset, R1_SP);
+    addi(r_handle, R1_SP, oop_offset);
+
+    cmpdi(CCR0, r_oop, 0);
+    bne(CCR0, skip);
+    // Use a NULL handle if oop is NULL.
+    li(r_handle, 0);
+    bind(skip);
+
+    if (dst.first()->is_stack()) {
+      // reg to stack
+      std(r_handle, reg2offset(dst.first(), out_stk_bias), R1_SP);
+    } else {
+      // reg to reg
+      // Nothing to do, r_handle is already the dst register.
+    }
+  }
+}
+
+void MacroAssembler::int_move(VMRegPair src, VMRegPair dst,
+                              Register r_caller_sp, Register r_temp,
+                              int in_stk_bias, int out_stk_bias) {
+  assert(src.first()->is_valid(), "incoming must be int");
+  // upcall stub can use int as dst, downcalls use only long.
+  assert(dst.first()->is_valid(), "outgoing must be int or long");
+
+  if (src.first()->is_stack()) {
+    if (dst.first()->is_stack()) {
+      // stack to stack
+      lwa(r_temp, reg2offset(src.first(), in_stk_bias), r_caller_sp);
+      std(r_temp, reg2offset(dst.first(), out_stk_bias), R1_SP);
+    } else {
+      // stack to reg
+      lwa(dst.first()->as_Register(), reg2offset(src.first(), in_stk_bias), r_caller_sp);
+    }
+  } else if (dst.first()->is_stack()) {
+    // reg to stack
+    extsw(r_temp, src.first()->as_Register());
+    std(r_temp, reg2offset(dst.first(), out_stk_bias), R1_SP);
+  } else {
+    // reg to reg
+    extsw(dst.first()->as_Register(), src.first()->as_Register());
+  }
+}
+
+void MacroAssembler::long_move(VMRegPair src, VMRegPair dst,
+                               Register r_caller_sp, Register r_temp,
+                               int in_stk_bias, int out_stk_bias) {
+  assert(src.first()->is_valid() && src.second() == src.first()->next(), "incoming must be long");
+  assert(dst.first()->is_valid() && dst.second() == dst.first()->next(), "outgoing must be long");
+
+  if (src.first()->is_stack()) {
+    if (dst.first()->is_stack()) {
+      // stack to stack
+      ld( r_temp, reg2offset(src.first(), in_stk_bias), r_caller_sp);
+      std(r_temp, reg2offset(dst.first(), out_stk_bias), R1_SP);
+    } else {
+      // stack to reg
+      ld(dst.first()->as_Register(), reg2offset(src.first(), in_stk_bias), r_caller_sp);
+    }
+  } else if (dst.first()->is_stack()) {
+    // reg to stack
+    std(src.first()->as_Register(), reg2offset(dst.first(), out_stk_bias), R1_SP);
+  } else {
+    // reg to reg
+    if (dst.first()->as_Register() != src.first()->as_Register())
+      mr(dst.first()->as_Register(), src.first()->as_Register());
+  }
+}
+
+void MacroAssembler::float_move(VMRegPair src, VMRegPair dst,
+                                Register r_caller_sp, Register r_temp,
+                                int in_stk_bias, int out_stk_bias) {
+  assert(src.first()->is_valid() && !src.second()->is_valid(), "incoming must be float");
+  assert(dst.first()->is_valid() && !dst.second()->is_valid(), "outgoing must be float");
+
+  if (src.first()->is_stack()) {
+    if (dst.first()->is_stack()) {
+      // stack to stack
+      lwz(r_temp, reg2offset(src.first(), in_stk_bias), r_caller_sp);
+      stw(r_temp, reg2offset(dst.first(), out_stk_bias), R1_SP);
+    } else {
+      // stack to reg
+      lfs(dst.first()->as_FloatRegister(), reg2offset(src.first(), in_stk_bias), r_caller_sp);
+    }
+  } else if (dst.first()->is_stack()) {
+    // reg to stack
+    stfs(src.first()->as_FloatRegister(), reg2offset(dst.first(), out_stk_bias), R1_SP);
+  } else {
+    // reg to reg
+    if (dst.first()->as_FloatRegister() != src.first()->as_FloatRegister())
+      fmr(dst.first()->as_FloatRegister(), src.first()->as_FloatRegister());
+  }
+}
+
+void MacroAssembler::double_move(VMRegPair src, VMRegPair dst,
+                                 Register r_caller_sp, Register r_temp,
+                                 int in_stk_bias, int out_stk_bias) {
+  assert(src.first()->is_valid() && src.second() == src.first()->next(), "incoming must be double");
+  assert(dst.first()->is_valid() && dst.second() == dst.first()->next(), "outgoing must be double");
+
+  if (src.first()->is_stack()) {
+    if (dst.first()->is_stack()) {
+      // stack to stack
+      ld( r_temp, reg2offset(src.first(), in_stk_bias), r_caller_sp);
+      std(r_temp, reg2offset(dst.first(), out_stk_bias), R1_SP);
+    } else {
+      // stack to reg
+      lfd(dst.first()->as_FloatRegister(), reg2offset(src.first(), in_stk_bias), r_caller_sp);
+    }
+  } else if (dst.first()->is_stack()) {
+    // reg to stack
+    stfd(src.first()->as_FloatRegister(), reg2offset(dst.first(), out_stk_bias), R1_SP);
+  } else {
+    // reg to reg
+    if (dst.first()->as_FloatRegister() != src.first()->as_FloatRegister())
+      fmr(dst.first()->as_FloatRegister(), src.first()->as_FloatRegister());
+  }
+}
+
+
 // Check whether instruction is a read access to the polling page
 // which was emitted by load_from_polling_page(..).
 bool MacroAssembler::is_load_from_polling_page(int instruction, void* ucontext,

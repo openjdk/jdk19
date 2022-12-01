@@ -24,7 +24,7 @@
 /*
  * @test id=default_gc
  * @enablePreview
- * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64"
+ * @requires ((os.arch == "amd64" | os.arch == "x86_64") & sun.arch.data.model == "64") | os.arch == "aarch64" | os.arch == "ppc64le"
  * @library /test/lib
  * @library ../
  * @build sun.hotspot.WhiteBox

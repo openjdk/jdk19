@@ -32,7 +32,8 @@ public enum CABI {
     SysV,
     Win64,
     LinuxAArch64,
-    MacOsAArch64;
+    MacOsAArch64,
+    LinuxPPC64le;
 
     private static final CABI ABI;
     private static final String ARCH;
@@ -58,6 +59,9 @@ public enum CABI {
                 // The Linux ABI follows the standard AAPCS ABI
                 ABI = LinuxAArch64;
             }
+        } else if (ARCH.equals("ppc64le")) {
+            // 64-Bit ELF V2 ABI
+            ABI = LinuxPPC64le;
         } else {
             // unsupported
             ABI = null;

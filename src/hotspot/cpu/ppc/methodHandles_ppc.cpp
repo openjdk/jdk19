@@ -310,7 +310,17 @@ address MethodHandles::generate_method_handle_interpreter_entry(MacroAssembler* 
 
 void MethodHandles::jump_to_native_invoker(MacroAssembler* _masm, Register nep_reg, Register temp_target) {
   BLOCK_COMMENT("jump_to_native_invoker {");
-  __ stop("Should not reach here");
+  assert_different_registers(nep_reg, temp_target);
+  assert(nep_reg != noreg, "required register");
+
+  // Load the invoker, as NEP -> .invoker
+  __ verify_oop(nep_reg);
+  //__ access_load_at(T_ADDRESS, IN_HEAP,
+  //                  nep_reg, jdk_internal_foreign_abi_NativeEntryPoint::downcall_stub_address_offset_in_bytes(),
+  //                  temp_target, noreg, noreg, MacroAssembler::PRESERVATION_FRAME_LR_GP_FP_REGS);
+  __ ld(temp_target, jdk_internal_foreign_abi_NativeEntryPoint::downcall_stub_address_offset_in_bytes(), nep_reg);
+  __ mtctr(temp_target);
+  __ bctr();
   BLOCK_COMMENT("} jump_to_native_invoker");
 }
 
