@@ -55,6 +55,10 @@ public enum TypeClass {
         }
     }
 
+    static boolean isSingleRegisterAggregate(MemoryLayout type) {
+        return type.bitSize() <= 64;
+    }
+
     static boolean isRegisterAggregate(MemoryLayout type) {
         return type.bitSize() <= MAX_AGGREGATE_REGS_SIZE * 64;
     }

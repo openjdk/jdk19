@@ -159,6 +159,7 @@ public abstract class CallArranger {
     private static boolean isInMemoryReturn(Optional<MemoryLayout> returnLayout) {
         return returnLayout
             .filter(GroupLayout.class::isInstance)
+            .filter(layout -> !TypeClass.isSingleRegisterAggregate(layout))
             .isPresent();
     }
 
